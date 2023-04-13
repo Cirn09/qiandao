@@ -57,7 +57,7 @@ class EchonHandler(ApiBase):
         Argument(name="n", required=True, description="n", type=int),
     ]
     api_example = {"text": "测试输入", "n": "3"}
-    api_example_randered = 'echo?text=测试输入&n=3&__fileter__=text_0'
+    api_example_randered = 'echon?text=测试输入&n=3&__filter__=text_0'
     
 
     async def get(self, text: str, n: int):
