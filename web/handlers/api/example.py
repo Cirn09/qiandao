@@ -57,6 +57,8 @@ class EchonHandler(ApiBase):
         Argument(name="n", required=True, description="n", type=int),
     ]
     api_example = {"text": "测试输入", "n": "3"}
+    api_example_randered = 'echo?text=测试输入&n=3&__fileter__=text_0'
+    
 
     async def get(self, text: str, n: int):
         d = {f"text_{i}": text for i in range(n)}
