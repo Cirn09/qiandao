@@ -48,7 +48,7 @@
         <tr>
           <td rowspan="{{ rowspan }}">{{ api[1].api_name }}</td>
           <td rowspan="{{ rowspan }}" class="showbut" id="api_url{{i}}">
-            <a href="{{ api[0] }}" target="_blank" rel="nofollow">api:/{{ api[0] }}</a>
+            <a href="{{ api[1].api_url_disp }}" target="_blank" rel="nofollow">api:/{{ api[1].api_url_disp }}</a>
             <button class="btn hljs-button" data-clipboard-target="#api_url{{i}}">复制</button>
           </td>
           <td rowspan="{{ rowspan }}">{{ api[1].api_description }}</td>
@@ -57,12 +57,20 @@
             <td>{{ api[1].api_arguments[0].name }}</td>
             <td>{{ api[1].api_arguments[0].description }}</td>
             {% if api[1].api_arguments[0].required %}
-              <td>是</td>
+              <td>✅</td>
+              <td>{{ api[1].api_arguments[0].type.__name__ }}</td>
+              <td>❎</td>
             {% else %}
-              <td>否</td>
+              <td>❎</td>
+              <td>{{ api[1].api_arguments[0].type.__name__ }}</td>
+              <td>{{ repr(api[1].api_arguments[0].default) }}</td>
             {% endif %}
-            <td>{{ api[1].api_arguments[0].type.__name__ }}</td>
-            <td>{{ repr(api[1].api_arguments[0].default) }}</td>
+          {% else %}
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
           {% endif %}
 
           <td rowspan="{{ rowspan }}" class="showbut" id="api_exam{{i}}">
@@ -77,12 +85,14 @@
               <td>{{ api[1].api_arguments[j].name }}</td>
               <td>{{ api[1].api_arguments[j].description }}</td>
               {% if api[1].api_arguments[j].required %}
-                <td>是</td>
+                <td>✅</td>
+                <td>{{ api[1].api_arguments[j].type.__name__ }}</td>
+                <td>❎</td>
               {% else %}
-                <td>否</td>
+                <td>❎</td>
+                <td>{{ api[1].api_arguments[j].type.__name__ }}</td>
+                <td>{{ api[1].api_arguments[j].default }}</td>
               {% endif %}
-              <td>{{ api[1].api_arguments[j].type.__name__ }}</td>
-              <td>{{ api[1].api_arguments[j].default }}</td>
             </tr>
           {% endfor %}
         {% endif %}

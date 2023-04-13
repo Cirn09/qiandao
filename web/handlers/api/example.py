@@ -15,8 +15,8 @@ class EchoHandler(ApiBase):
         # Get 请求，raw回复
         Rtv = {}
         try:
-            args = self.api_get_arguments()
-            text = args["text"]  # ts = self.get_argument("text", "")
+            args = self.api_get_arguments() # 可以通过 api_get_arguments 获取所有在 api_arguments 中定义的参数
+            text = args["text"]  # ts = self.get_argument("text", "") # 也可以通过 get_argument 获取
             self.write(text)
         except Exception as e:
             self.write(str(e))
@@ -31,7 +31,7 @@ class EchoHandler(ApiBase):
         except Exception as e:
             Rtv["状态"] = str(e)
 
-        self.api_write_json(Rtv)
+        self.api_write_json(Rtv) # 可以通过 api_write_json 返回 json 格式的数据，它会自动设置 http header
 
 
 handlers = (EchoHandler,)

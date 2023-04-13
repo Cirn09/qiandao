@@ -33,14 +33,20 @@ class Argument(object):
 class ApiMetaclass(type):
     # 用于实现 api_url 和 api_example_randered 的元类
     def __new__(cls, name, bases, attrs):
-        if name == 'ApiBase':
+        if name == "ApiBase":
             return super().__new__(cls, name, bases, attrs)
-        
+
         attrs["api_url"] = URL_PREFIX + attrs["api_url"]
-        
+
+        if "api_url_disp" not in attrs:
+            attrs["api_url_disp"] = attrs["api_url"]
+        else:
+            attrs["api_url_disp"] = URL_PREFIX + attrs["api_url_disp"]
+
         # 此处还可以进行 api_example 是否都在 api_arguments 中的检查
-        exam = [f'{k}={v}' for k, v in attrs["api_example"].items()]
-        attrs["api_example_randered"] = f'{attrs["api_url"]}?{"&".join(exam)}'
+        if "api_example_randered" not in attrs:
+            exam = [f"{k}={v}" for k, v in attrs["api_example"].items()]
+            attrs["api_example_randered"] = f'{attrs["api_url_disp"]}?{"&".join(exam)}'
         return super().__new__(cls, name, bases, attrs)
 
 
@@ -51,6 +57,8 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
     api_url: str
     """API 的 URL，会自动加上前缀 "/util/"，支持正则表达式
     例如："regex" （加上前缀后为"/util/regex"）"""
+    api_url_disp: str
+    """只用于在前段显示的 URL，未创建时会使用 api_url"""
     api_description: str
     '''API 功能说明
     例如："使用正则表达式匹配字符串"'''
@@ -61,9 +69,8 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
     api_example: dict[str, str] = {}
     r"""API 示例
     例如：{'data': '数字测试1234', 'p': '(\d+)'}"""
-
     api_example_randered: str
-    """字符串形式的 API 实例，构造函数会自动从 api_example 创建，不需要手动设置"""
+    """字符串形式的 API 实例，构造函数会自动从 api_url_disp 和 api_example 创建，也可以手动设置"""
 
     def api_get_arguments(self) -> dict[str, typing.Any]:
         """获取 API 的所有参数"""
@@ -102,6 +109,8 @@ def load_all_api() -> list[tuple[str, ApiBase]]:
     for finder, name, ispkg in pkgutil.iter_modules([path]):
         module = importlib.import_module("." + name, __name__)
         # metas[name] = importlib.import_module('.api.' + name, __name__).Meta.meta
+        if not hasattr(module, "handlers"):
+            continue
         for handler in module.handlers:
             handlers.append((handler.api_url, handler))
 
