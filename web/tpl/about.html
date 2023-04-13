@@ -9,18 +9,105 @@
 
 {% block body %}
 {{ utils.header(current_user) }}
-{% raw %}
+
 <section class="tpl">
 <div class="container">
-  <h2>
-    常用API
-  </h2>
   <div class="input-group margin-bottom-sm">
     <span class="input-group-addon"><i class="fa fa-search" aria-hidden="true"></i></span>
     <input id="search-input" class="search form-control input-lg" placeholder="搜索" autocomplete="off" spellcheck="false" autocorrect="off" tabindex="1" data-column="all">
     <span class="input-group-addon btn btn-default"><span type="span" class="fa fa-times-circle reset" aria-hidden="true"> 清空</span></span>
   </div>
+
+  <h2>
+    API
+  </h2>
   <table id="pubapi_list" class="table table-hover tablesorter apitable" style="font-size:x-small">
+    <thead>
+      <tr>
+        <th rowspan="2">名称</th>
+        <th rowspan="2">地址</th>
+        <th rowspan="2">说明</th>
+        <th colspan="5">参数</th>
+        <th rowspan="2">用例</th>
+      </tr>
+      <tr class="tablesorter-childRow">
+        <th>名称</th>
+        <th>描述</th>
+        <th>必须</th>
+        <th>类型</th>
+        <th>默认</th>
+      </tr>
+    </thead>
+
+    <tbody style="text-align:center;font-size:xx-small" >
+      
+      {% for i in range(apis | length) %}
+      {% set api = apis[i] %}
+      {% set args = api.api_arguments|length %}
+      {% set rowspan = args if args > 0 else 1 %}
+        <tr>
+          <td rowspan="{{ rowspan }}">{{ api.api_name }}</td>
+          <td rowspan="{{ rowspan }}" class="showbut" id="api_url{{i}}">
+            <a href="{{ api.api_url }}" target="_blank" rel="nofollow">api:/{{ api.api_url }}</a>
+            <button class="btn hljs-button" data-clipboard-target="#api_url{{i}}">复制</button>
+          </td>
+          <td rowspan="{{ rowspan }}">{{ api.api_description | safe }}</td>
+
+          {% if args > 0 %}
+            <td>{{ api.api_arguments[0].name }}</td>
+            <td>{{ api.api_arguments[0].description }}</td>
+            {% if api.api_arguments[0].required %}
+              <td>✅</td>
+              <td>{{ api.api_arguments[0].type.__name__ }}</td>
+              <td>❎</td>
+            {% else %}
+              <td>❎</td>
+              <td>{{ api.api_arguments[0].type.__name__ }}</td>
+              <td>{{ repr(api.api_arguments[0].default) }}</td>
+            {% endif %}
+          {% else %}
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
+          {% endif %}
+
+          <td rowspan="{{ rowspan }}" class="showbut" id="api_exam{{i}}">
+            <a href="{{ api.api_example_randered }}" target="_blank" rel="nofollow">api:/{{ api.api_example_randered }}</a>
+            <button class="btn hljs-button" data-clipboard-target="#api_exam{{i}}">复制</button>
+          <td>
+        </tr>
+        
+        {% if args > 1 %}
+          {% for j in range(1, args) %}
+            <tr class="tablesorter-childRow">
+              <td>{{ api.api_arguments[j].name }}</td>
+              <td>{{ api.api_arguments[j].description }}</td>
+              {% if api.api_arguments[j].required %}
+                <td>✅</td>
+                <td>{{ api.api_arguments[j].type.__name__ }}</td>
+                <td>❎</td>
+              {% else %}
+                <td>❎</td>
+                <td>{{ api.api_arguments[j].type.__name__ }}</td>
+                <td>{{ api.api_arguments[j].default }}</td>
+              {% endif %}
+            </tr>
+          {% endfor %}
+        {% endif %}
+
+      {% endfor %}
+
+    </tbody>
+  </table>
+
+{% raw %}
+
+  <h2>
+    旧.常用API
+  </h2>
+  <table id="pubapi_list.old" class="table table-hover tablesorter apitable" style="font-size:x-small">
     <thead>
       <tr>
         <th>API</th>
