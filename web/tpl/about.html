@@ -43,27 +43,27 @@
       
       {% for i in range(apis | length) %}
       {% set api = apis[i] %}
-      {% set args = api[1].api_arguments|length %}
+      {% set args = api.api_arguments|length %}
       {% set rowspan = args if args > 0 else 1 %}
         <tr>
-          <td rowspan="{{ rowspan }}">{{ api[1].api_name }}</td>
+          <td rowspan="{{ rowspan }}">{{ api.api_name }}</td>
           <td rowspan="{{ rowspan }}" class="showbut" id="api_url{{i}}">
-            <a href="{{ api[1].api_url_disp }}" target="_blank" rel="nofollow">api:/{{ api[1].api_url_disp }}</a>
+            <a href="{{ api.api_url_disp }}" target="_blank" rel="nofollow">api:/{{ api.api_url_disp }}</a>
             <button class="btn hljs-button" data-clipboard-target="#api_url{{i}}">复制</button>
           </td>
-          <td rowspan="{{ rowspan }}">{{ api[1].api_description }}</td>
+          <td rowspan="{{ rowspan }}">{{ api.api_description }}</td>
 
           {% if args > 0 %}
-            <td>{{ api[1].api_arguments[0].name }}</td>
-            <td>{{ api[1].api_arguments[0].description }}</td>
-            {% if api[1].api_arguments[0].required %}
+            <td>{{ api.api_arguments[0].name }}</td>
+            <td>{{ api.api_arguments[0].description }}</td>
+            {% if api.api_arguments[0].required %}
               <td>✅</td>
-              <td>{{ api[1].api_arguments[0].type.__name__ }}</td>
+              <td>{{ api.api_arguments[0].type.__name__ }}</td>
               <td>❎</td>
             {% else %}
               <td>❎</td>
-              <td>{{ api[1].api_arguments[0].type.__name__ }}</td>
-              <td>{{ repr(api[1].api_arguments[0].default) }}</td>
+              <td>{{ api.api_arguments[0].type.__name__ }}</td>
+              <td>{{ repr(api.api_arguments[0].default) }}</td>
             {% endif %}
           {% else %}
             <td>&nbsp;</td>
@@ -74,7 +74,7 @@
           {% endif %}
 
           <td rowspan="{{ rowspan }}" class="showbut" id="api_exam{{i}}">
-            <a href="{{ api[1].api_example_randered }}" target="_blank" rel="nofollow">api:/{{ api[1].api_example_randered }}</a>
+            <a href="{{ api.api_example_randered }}" target="_blank" rel="nofollow">api:/{{ api.api_example_randered }}</a>
             <button class="btn hljs-button" data-clipboard-target="#api_exam{{i}}">复制</button>
           <td>
         </tr>
@@ -82,16 +82,16 @@
         {% if args > 1 %}
           {% for j in range(1, args) %}
             <tr class="tablesorter-childRow">
-              <td>{{ api[1].api_arguments[j].name }}</td>
-              <td>{{ api[1].api_arguments[j].description }}</td>
-              {% if api[1].api_arguments[j].required %}
+              <td>{{ api.api_arguments[j].name }}</td>
+              <td>{{ api.api_arguments[j].description }}</td>
+              {% if api.api_arguments[j].required %}
                 <td>✅</td>
-                <td>{{ api[1].api_arguments[j].type.__name__ }}</td>
+                <td>{{ api.api_arguments[j].type.__name__ }}</td>
                 <td>❎</td>
               {% else %}
                 <td>❎</td>
-                <td>{{ api[1].api_arguments[j].type.__name__ }}</td>
-                <td>{{ api[1].api_arguments[j].default }}</td>
+                <td>{{ api.api_arguments[j].type.__name__ }}</td>
+                <td>{{ api.api_arguments[j].default }}</td>
               {% endif %}
             </tr>
           {% endfor %}

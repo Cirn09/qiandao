@@ -47,6 +47,8 @@ class ApiMetaclass(type):
         if "api_example_randered" not in attrs:
             exam = [f"{k}={v}" for k, v in attrs["api_example"].items()]
             attrs["api_example_randered"] = f'{attrs["api_url_disp"]}?{"&".join(exam)}'
+        else:
+            attrs["api_example_randered"] = URL_PREFIX + attrs["api_example_randered"]
         return super().__new__(cls, name, bases, attrs)
 
 
@@ -55,7 +57,7 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
     '''API 名称
     例如："正则表达式替换"'''
     api_url: str
-    """API 的 URL，会自动加上前缀 "/util/"，支持正则表达式
+    """API 的 URL，会自动加上前缀 "/util/"。可以使用正则表达式，但是不建议。
     例如："regex" （加上前缀后为"/util/regex"）"""
     api_url_disp: str
     """只用于在前段显示的 URL，未创建时会使用 api_url"""
@@ -102,8 +104,9 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
         raise NotImplementedError("Must be implemented by subclass")
 
 
-def load_all_api() -> list[tuple[str, ApiBase]]:
+def load_all_api() -> tuple[list[ApiBase], list[tuple[str, ApiBase]]]:
     handlers: list[tuple[str, ApiBase]] = []
+    apis: list[ApiBase] = []
 
     path = os.path.dirname(__file__)
     for finder, name, ispkg in pkgutil.iter_modules([path]):
@@ -111,10 +114,13 @@ def load_all_api() -> list[tuple[str, ApiBase]]:
         # metas[name] = importlib.import_module('.api.' + name, __name__).Meta.meta
         if not hasattr(module, "handlers"):
             continue
+        apis.extend(module.handlers)
         for handler in module.handlers:
             handlers.append((handler.api_url, handler))
+        if hasattr(module, 'deprecated_handlers'): # 为兼容性而保留的 API，不会在前端显示
+            handlers.extend(module.deprecated_handlers)
 
-    return handlers
+    return apis, handlers
 
 
-handlers = load_all_api()
+apis, handlers = load_all_api()

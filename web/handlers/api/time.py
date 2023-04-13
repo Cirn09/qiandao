@@ -14,8 +14,7 @@ from . import ApiBase, Argument
 class DelayHandler(ApiBase):
     api_name = "延时"
     api_description = "延迟指定时长"
-    api_url = r"delay/?(\d*\.?\d?)?"
-    api_url_disp = "delay"
+    api_url = "delay"
     api_arguments = [
         Argument(name="seconds", required=True, description="延时时长，单位为秒", type=float)
     ]
@@ -99,8 +98,6 @@ class TimeStampHandler(ApiBase):
         except Exception as e:
             Rtv["状态"] = str(e)
 
-        # self.set_header("Content-Type", "application/json; charset=UTF-8")
-        # self.write(json.dumps(Rtv, ensure_ascii=False, indent=4))
         self.api_write_json(Rtv)
 
 
@@ -111,4 +108,11 @@ def yearday(year):
         return "365"
 
 
-handlers = (DelayHandler, TimeStampHandler,)
+handlers = (
+    DelayHandler,
+    TimeStampHandler,
+)
+deprecated_handlers = (
+    (r"/util/delay/(\d+)", DelayHandler),
+    (r"/util/delay/(\d*\.\d+)", DelayHandler),
+)
