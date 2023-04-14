@@ -47,8 +47,8 @@ class EchoHandler(ApiBase):
         ),  # required 为 True 时，不要设置 default
     ]
     api_example = {"text": "测试输入"}
-    # api_example_randered = 'echo?text=测试输入'
-    # 框架会自动生成 api_example_randered，如果你对框架生成的结果不满意，可以手动设置
+    # api_example_rendered = 'echo?text=测试输入'
+    # 框架会自动生成 api_example_rendered，如果你对框架生成的结果不满意，可以手动设置
 
     async def get(self, text: str):
         # 参数名必须与 api_arguments 中的 name 一致，
@@ -66,7 +66,7 @@ class EchonHandler(ApiBase):
         Argument(name="n", required=True, description="n", type=int),
     ]
     api_example = {"text": "测试输入", "n": "3"}
-    api_example_randered = "echon?text=测试输入&n=3&__filter__=text_0"
+    api_example_rendered = "echon?text=测试输入&n=3&__filter__=text_0"
 
     async def get(self, text: str, n: int):
         d = {f"text_{i}": text for i in range(n)}
@@ -83,7 +83,7 @@ class ConcatHandler(ApiBase):
         Argument(name="sep", required=True, description="n", type=str),
     ]
     # api_example = {"texts": "测试输入", "sep": ","}
-    api_example_randered = "concat?texts=1&texts=2&texts=9&sep=,"
+    api_example_rendered = "concat?texts=1&texts=2&texts=9&sep=,"
 
     async def get(self, texts: list[str], sep: str):
         return sep.join(texts)
@@ -163,4 +163,5 @@ handlers = (
     ExampleEvalHandler,
     Example2Handler,
     ExampleErrorHandler,
+    JSONHandler,
 )

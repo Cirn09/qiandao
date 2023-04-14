@@ -65,11 +65,20 @@ class ApiMetaclass(type):
         attrs["api_url"] = URL_PREFIX + attrs["api_url"]
 
         # 此处还可以进行 api_example 是否都在 api_arguments 中的检查
-        if "api_example_randered" not in attrs:
+        if "api_example_rendered" not in attrs and "api_example" in attrs:
+            # 定义了 api_example 但是没有定义 api_example_rendered
+            # 从 api_example 中生成 api_example_rendered
             exam = [f"{k}={v}" for k, v in attrs["api_example"].items()]
-            attrs["api_example_randered"] = f'{attrs["api_url"]}?{"&".join(exam)}'
+            attrs["api_example_rendered"] = f'{attrs["api_url"]}?{"&".join(exam)}'
+        elif "api_example_rendered" in attrs:
+            # 定义了 api_example_rendered（可能也定义了 api_example，
+            # 这种情况下还是以 api_example_rendered 为准）
+            # 补全 URL 前缀
+            attrs["api_example_rendered"] = URL_PREFIX + attrs["api_example_rendered"]
         else:
-            attrs["api_example_randered"] = URL_PREFIX + attrs["api_example_randered"]
+            # 没有 api_example，也没有 api_example_rendered
+            # 就提供个 URL 方便复制吧
+            attrs["api_example_rendered"] = attrs["api_url"]
 
         def method_wrap(func: typing.Callable) -> typing.Callable:
             async def wrapper(self: "ApiBase") -> None:
@@ -108,7 +117,7 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
     api_example: dict[str, str] = {}
     r"""API 示例
     例如：{'seconds': 1.5}"""
-    api_example_randered: str
+    api_example_rendered: str
     '''API 示例的 URL，会自动从 api_url 和 api_example 中生成。
     也可以手动指定，框架会自动添加前缀 "/api/"'''
 
@@ -136,7 +145,10 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
         return args
 
     def api_write(self, data):
-        if isinstance(data, typing.Dict):
+        if data is None:
+            # 空
+            return
+        elif isinstance(data, typing.Dict):
             if len(data) == 1:
                 # 如果只有一个键值对，直接返回值
                 # 不递归处理，默认 API 不会返回过于复杂的类型
