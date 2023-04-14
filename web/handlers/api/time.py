@@ -68,7 +68,7 @@ class TimestampHandler(ApiBase):
             required=False,
             description="时区",
             default="Asia/Shanghai",  # default = pytz.timezone("Asia/Shanghai"),
-            type=datetime.tzinfo,
+            type=str,
             init=pytz.timezone,
         ),
     ]
