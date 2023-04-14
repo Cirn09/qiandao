@@ -15,6 +15,13 @@ from libs.safe_eval import safe_eval
 URL_PREFIX = "/api/"
 
 
+class ApiError(HTTPError):
+    def __init__(self, status_code: int, reason: str, *args, **kwargs):
+        # 对于 HTTPError，log_message 是打印到控制台的内容，reason 是返回给用户的内容
+        # 我们希望 API 的用户可以直接从 Web 界面看到错误信息，所以将 log_message 和 reason 设置为相同的内容
+        super().__init__(status_code, reason, reason=reason, *args, **kwargs)
+
+
 @dataclass()
 class Argument(object):
     name: str
@@ -95,7 +102,7 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
     api_description: str
     '''API 功能说明，支持 HTML 标签
     例如："使用正则表达式匹配字符串"'''
-    api_arguments: list[Argument] = []
+    api_arguments: typing.Sequence[Argument] = []
     """API 的参数列表
     例如：[Argument(name="seconds", required=True, description="延时时长", type=float)]"""
     api_example: dict[str, str] = {}
@@ -116,14 +123,14 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
                 vs = self.get_arguments(arg.name)
                 if arg.required and len(vs) == 0:
                     log = f"参数 {arg.name} 不能为空"
-                    raise HTTPError(400, log, reason=log)
+                    raise ApiError(400, log)
                 value = [init(v) if v is not None else None for v in vs]
             else:
                 v = self.get_argument(arg.name, arg.default)
                 value = init(v) if v is not None else None
                 if arg.required and value is None:
                     log = f"参数 {arg.name} 不能为空"
-                    raise HTTPError(400, log, reason=log)
+                    raise ApiError(400, log)
             args[arg.name] = value
 
         return args

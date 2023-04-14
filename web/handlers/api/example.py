@@ -1,8 +1,7 @@
 from typing import Any
 
-from tornado.web import HTTPError
 
-from . import ApiBase, Argument, safe_eval
+from . import ApiBase, Argument, safe_eval, ApiError
 
 
 # API 插件设计准则：
@@ -12,6 +11,7 @@ from . import ApiBase, Argument, safe_eval
 #   - 处理请求时，未被处理的异常会自动返回 HTTP 500 错误
 #   - 访问未实现的 API method 会自动返回 HTTP 405 错误。如只实现了 GET 时访问 POST。
 #       如果 POST 和 GET 实现完全相同，可以在 get 函数后写上 post = get
+#   - 建议使用 `raise ApiError(status_code, reason)` 设置异常代码和原因（见 ExampleErrorHandler）
 # - 只允许 URL 传参（url?key=value）和 POST 传参，不允许 /delay/value 形式传参（即不允许在 URL 中使用正则）
 # - 参数尽量使用简单类型，参数的初始化函数尽量使用内置函数，使用 safe_eval 代替 eval，避免使用 safe_eval
 # - 所有的 key 都使用 ASCII 字符，而不是中英文混用
@@ -121,10 +121,27 @@ class Example2Handler(ApiBase):
         return obj.v
 
 
+class ExampleErrorHandler(ApiBase):
+    api_name = "异常"
+    api_description = "引发异常的示例"
+    api_url = "error"
+    api_arguments = (
+        Argument("code", False, "错误代码", int, default=400),
+        Argument("reason", False, "错误原因", str, default="测试错误"),
+    )
+    api_example = {"code": "400", "reason": "测试错误"}
+
+    async def get(self, code: int, reason: str):
+        if code == 999:
+            eee = 9 / 0
+        raise ApiError(code, reason)
+
+
 handlers = (
     EchoHandler,
     EchonHandler,
     ConcatHandler,
     ExampleEvalHandler,
     Example2Handler,
+    ExampleErrorHandler,
 )
