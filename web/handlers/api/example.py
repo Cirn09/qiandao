@@ -1,3 +1,4 @@
+import json
 from typing import Any
 
 
@@ -12,7 +13,8 @@ from . import ApiBase, Argument, safe_eval, ApiError
 #   - 访问未实现的 API method 会自动返回 HTTP 405 错误。如只实现了 GET 时访问 POST。
 #       如果 POST 和 GET 实现完全相同，可以在 get 函数后写上 post = get
 #   - 建议使用 `raise ApiError(status_code, reason)` 设置异常代码和原因（见 ExampleErrorHandler）
-# - 只允许 URL 传参（url?key=value）和 POST 传参，不允许 /delay/value 形式传参（即不允许在 URL 中使用正则）
+# - 允许 URL 传参（url?key=value）和 POST form 传参，不允许 /delay/value 形式传参（即不允许在 URL 中使用正则），
+#   不建议使用 POST JSON 传参（见 JSONHandler）
 # - 参数尽量使用简单类型，参数的初始化函数尽量使用内置函数，使用 safe_eval 代替 eval，避免使用 safe_eval
 # - 所有的 key 都使用 ASCII 字符，而不是中英文混用
 # - 返回值：简单类型直接返回（str、int、float）；
@@ -121,6 +123,7 @@ class Example2Handler(ApiBase):
         return obj.v
 
 
+# 异常示例
 class ExampleErrorHandler(ApiBase):
     api_name = "异常"
     api_description = "引发异常的示例"
@@ -135,6 +138,22 @@ class ExampleErrorHandler(ApiBase):
         if code == 999:
             eee = 9 / 0
         raise ApiError(code, reason)
+
+
+# 未能融入 API 框架的 POST JSON 传参示例
+# 和原生的 tornado 区别不大了
+class JSONHandler(ApiBase):
+    api_name = "json echo"
+    api_description = "未能融入 API 框架的 POST JSON 传参示例"
+    api_url = "json"
+
+    async def post(self):
+        if not self.request.headers.get("Content-Type", "").startswith(
+            "application/json"
+        ):
+            raise ApiError(400, "Content-Type must be application/json")
+        data = json.loads(self.request.body.decode())  # 更合适的方法是读取 HTTP 头中声明的编码类型
+        self.api_write_json(data)  # 使用 self.api_write_json() 不会受到 __filter__ 影响
 
 
 handlers = (
