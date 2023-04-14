@@ -3,33 +3,50 @@ import json
 import pkgutil
 import importlib
 import typing
+import dataclasses
 from dataclasses import dataclass
 
 from tornado.web import HTTPError
 
 from ..base import BaseHandler
+from libs.safe_eval import safe_eval
 
 
 URL_PREFIX = "/api/"
 
 
-@dataclass(frozen=True)
+@dataclass()
 class Argument(object):
     name: str
     '''参数名称
     例如："regex"'''
     required: bool
-    """参数是否必须"""
+    """参数是否必须
+    调用 API 时，缺少必须参数会返回 HTTP 400 错误"""
     description: str
     '''参数描述
     例如："正则表达式"'''
     type: "type" = str
-    """参数类型，默认为 str
-    该类型必须可以从 str 类型初始化，例如 int("123"), float("123.456")"""
+    """参数类型，默认为 str"""
+    init: typing.Callable[[str], typing.Any] = None  # type: ignore
+    """参数初始化函数，初始化规则如下：
+    if self.init is None
+        if isinstance(self.type, typing.Callable):
+            self.init = self.type
+        else:
+            sele.init = lambda x: x
+    该初始化函数原型为 init(str) -> self.type，例如 int("123"), float("123.456")等"""
     multi: bool = False
-    """是否为多值参数"""
+    """是否为多值参数，比如 ?a=1&a=2&a=3
+    multi 为 True 时，参数值为 list，list 中每个元素都会通过 init 函数进行初始化"""
     default: typing.Any = None
     """参数默认值"""
+
+    def __post_init__(self):
+        if self.init is None:
+            self.init = self.type
+        if not isinstance(self.init, typing.Callable):
+            self.init = lambda x: x
 
 
 class ApiMetaclass(type):
@@ -93,16 +110,20 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
         args: dict[str, typing.Any] = {}
 
         for arg in self.api_arguments:
-            type = arg.type
-            if isinstance(type, typing.Type) and isinstance(type, typing.Callable):
-                v = self.get_argument(arg.name, arg.default)
-                value = type(v) if v is not None else None
-            else:
-                value = self.get_argument(arg.name, arg.default)
-            if arg.required and value is None:
-                log = f"参数 {arg.name} 不能为空"
-                raise HTTPError(400, log, reason=log)
+            init = arg.init
 
+            if arg.multi:
+                vs = self.get_arguments(arg.name)
+                if arg.required and len(vs) == 0:
+                    log = f"参数 {arg.name} 不能为空"
+                    raise HTTPError(400, log, reason=log)
+                value = [init(v) if v is not None else None for v in vs]
+            else:
+                v = self.get_argument(arg.name, arg.default)
+                value = init(v) if v is not None else None
+                if arg.required and value is None:
+                    log = f"参数 {arg.name} 不能为空"
+                    raise HTTPError(400, log, reason=log)
             args[arg.name] = value
 
         return args
@@ -131,12 +152,6 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
         self.set_header("Content-Type", "application/json; charset=UTF-8")
         self.write(json.dumps(data, ensure_ascii=ensure_ascii, indent=indent))
 
-    async def get(self):
-        raise NotImplementedError("Must be implemented by subclass")
-
-    async def post(self):
-        raise NotImplementedError("Must be implemented by subclass")
-
 
 def load_all_api() -> tuple[list[ApiBase], list[tuple[str, ApiBase]]]:
     handlers: list[tuple[str, ApiBase]] = []
@@ -145,7 +160,6 @@ def load_all_api() -> tuple[list[ApiBase], list[tuple[str, ApiBase]]]:
     path = os.path.dirname(__file__)
     for finder, name, ispkg in pkgutil.iter_modules([path]):
         module = importlib.import_module("." + name, __name__)
-        # metas[name] = importlib.import_module('.api.' + name, __name__).Meta.meta
         if not hasattr(module, "handlers"):
             continue
         apis.extend(module.handlers)
@@ -153,6 +167,7 @@ def load_all_api() -> tuple[list[ApiBase], list[tuple[str, ApiBase]]]:
             handlers.append((handler.api_url, handler))
 
     return apis, handlers
+
 
 # apis 是给 about.py 看的，用于生成前端页面
 # handlers 是给 handlers 看的，用于注册路由
