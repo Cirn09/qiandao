@@ -35,7 +35,7 @@ class TimestampHandler(ApiBase):
             name="ts", required=False, description="时间戳", type=float, default=None
         ),
         Argument(
-            name="form",
+            name="format",
             required=False,
             description="""时间格式<br/>
 %y 两位数的年份表示（00-99）<br/>
@@ -67,38 +67,23 @@ class TimestampHandler(ApiBase):
             name="tz",
             required=False,
             description="时区",
-            default="Asia/Shanghai",
+            default="Asia/Shanghai",  # default = pytz.timezone("Asia/Shanghai"),
             type=datetime.tzinfo,
             init=pytz.timezone,
         ),
     ]
-    api_example = {"ts": "1625068800", "form": "%Y-%m-%d %H:%M:%S"}
+    api_example = {"ts": "1625068800", "format": "%Y-%m-%d %H:%M:%S"}
 
-    tz_cst = pytz.timezone("Asia/Shanghai")
-    tz_utc = pytz.timezone("UTC")
-    gmt_format = "%a, %d %b %Y %H:%M:%S GMT"
-
-    async def get(self, ts: float | None, form: str, tz: datetime.tzinfo):
+    async def get(self, ts: float | None, format: str, tz: datetime.tzinfo):
         if ts is None:
             ts = time.time()
-
         dt_tz = datetime.datetime.fromtimestamp(ts, tz)
-        dt_utc = datetime.datetime.fromtimestamp(ts, self.tz_utc)
-        dt_cst = datetime.datetime.fromtimestamp(ts, self.tz_cst)
 
-        r = {}
-
-        r["ts"] = int(ts)
-        r["ts_full"] = ts
-        r["ts_16"] = int(ts * 1000000)
-
-        r["local"] = dt_tz.strftime(form)
-        r["week"] = dt_tz.strftime("%w/%W")
-        r["day"] = f'{dt_tz.strftime("%j")}/{yearday(dt_tz.year)}'
-
-        r["cst"] = dt_cst.strftime(form)
-        r["gmt"] = dt_utc.strftime(self.gmt_format)
-        r["iso"] = dt_utc.isoformat()
+        r = {
+            "timestamp": ts,
+            "formated": dt_tz.strftime(format),
+            "daysOfYear": yearday(dt_tz.year),
+        }
 
         return r
 
