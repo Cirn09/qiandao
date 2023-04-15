@@ -34,26 +34,41 @@ class Argument(object):
     '''参数描述
     例如："正则表达式"'''
     type: "type" = str
-    """参数类型，默认为 str"""
+    """参数类型，默认为 str
+    设置了 multi 时，type 描述的是列表内元素的类型"""
     init: typing.Callable[[str], typing.Any] = None  # type: ignore
     """参数初始化函数，初始化规则如下：
-    if self.init is None
-        if isinstance(self.type, typing.Callable):
-            self.init = self.type
-        else:
-            sele.init = lambda x: x
+    如果用户未提供且 self.type Callable，则使用 self.type；
+    如果用户未提供且 self.type 不是 Callable，则使用 lambda x: x。
     该初始化函数原型为 init(str) -> self.type，例如 int("123"), float("123.456")等"""
     multi: bool = False
-    """是否为多值参数，比如 ?a=1&a=2&a=3
-    multi 为 True 时，参数值为 list，list 中每个元素都会通过 init 函数进行初始化"""
-    default: typing.Any = None
-    """参数默认值"""
+    """是否为多值参数，比如 ?a=1&a=2&a=3 -> a=[1,2,3]"""
+    # multi 为 True 时，参数类型为 list[self.type]
+    # multi 为 True 时，default 必须为 list 或 tuple（如果 default 为 None，会被自动转换为空 tuple）"""
+    default: str | typing.Sequence | None = None
+    """参数默认值
+    如果设置了 multi，则 default 类型须为 Sequence[self.type]（默认为空 tuple）；
+    如果设置了 required，则 default 强制为 None；
+    其他情况下 default 类型应为 Optionl[str]。
+    
+    API 被调用时，用户若为提供该参数，则使用 init(default) 作为参数值。"""
+    default_disp: str | None = None
+    """默认值在前端的显示值，默认为 repr(self.default)"""
 
     def __post_init__(self):
         if self.init is None:
             self.init = self.type
         if not isinstance(self.init, typing.Callable):
             self.init = lambda x: x
+
+        if self.required:
+            self.default = None
+
+        if self.multi and self.default is None:
+            self.default = tuple()
+
+        if self.default_disp is None:
+            self.default_disp = repr(self.default)
 
 
 class ApiMetaclass(type):
@@ -64,21 +79,35 @@ class ApiMetaclass(type):
 
         attrs["api_url"] = URL_PREFIX + attrs["api_url"]
 
-        # 此处还可以进行 api_example 是否都在 api_arguments 中的检查
-        if "api_example_rendered" not in attrs and "api_example" in attrs:
-            # 定义了 api_example 但是没有定义 api_example_rendered
-            # 从 api_example 中生成 api_example_rendered
-            exam = [f"{k}={v}" for k, v in attrs["api_example"].items()]
-            attrs["api_example_rendered"] = f'{attrs["api_url"]}?{"&".join(exam)}'
-        elif "api_example_rendered" in attrs:
-            # 定义了 api_example_rendered（可能也定义了 api_example，
-            # 这种情况下还是以 api_example_rendered 为准）
-            # 补全 URL 前缀
-            attrs["api_example_rendered"] = URL_PREFIX + attrs["api_example_rendered"]
+        if "api_example" in attrs:
+            kv = []
+            for arg in attrs["api_arguments"]:
+                arg: Argument
+                k = arg.name
+                if k not in attrs["api_example"]:
+                    if arg.required:
+                        raise ValueError(f'{name}.api_example: "{k}" is required')
+                    continue
+                if arg.multi:
+                    e = attrs["api_example"][k]
+                    if not isinstance(e, (list, tuple)):
+                        raise ValueError(
+                            f'{name}.api_example: "{k}" should be list or tuple'
+                        )
+                    for v in e:
+                        kv.append(f"{k}={v}")
+                else:
+                    kv.append(f"{k}={attrs['api_example'][k]}")
+            attrs["api_example_rendered"] = f"{attrs['api_url']}?{'&'.join(kv)}"
         else:
-            # 没有 api_example，也没有 api_example_rendered
-            # 就提供个 URL 方便复制吧
-            attrs["api_example_rendered"] = attrs["api_url"]
+            if "api_example_rendered" in attrs:
+                # 如果自己声明了 api_example_rendered，那就直接补全 URL 前缀
+                attrs["api_example_rendered"] = (
+                    URL_PREFIX + attrs["api_example_rendered"]
+                )
+            else:
+                # 啥也没有，就提供个 URL 方便复制吧
+                attrs["api_example_rendered"] = attrs["api_url"]
 
         def method_wrap(func: typing.Callable) -> typing.Callable:
             async def wrapper(self: "ApiBase") -> None:
@@ -114,7 +143,7 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
     api_arguments: typing.Sequence[Argument] = []
     """API 的参数列表
     例如：[Argument(name="seconds", required=True, description="延时时长", type=float)]"""
-    api_example: dict[str, str] = {}
+    api_example: dict[str, str | typing.Sequence[str]] = {}
     r"""API 示例
     例如：{'seconds': 1.5}"""
     api_example_rendered: str
@@ -130,16 +159,22 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
 
             if arg.multi:
                 vs = self.get_arguments(arg.name)
-                if arg.required and len(vs) == 0:
-                    log = f"参数 {arg.name} 不能为空"
-                    raise ApiError(400, log)
-                value = [init(v) if v is not None else None for v in vs]
+                if not vs:
+                    if arg.required:
+                        raise ApiError(400, f"参数 {arg.name} 不能为空")
+                    vs: typing.Sequence = arg.default  # type: ignore
+                value = []
+                for v in vs:
+                    if not isinstance(v, arg.type):
+                        v = init(v)
+                    value.append(v)
             else:
-                v = self.get_argument(arg.name, arg.default)
-                value = init(v) if v is not None else None
-                if arg.required and value is None:
+                value = self.get_argument(arg.name, arg.default)  # type: ignore
+                if value is None and arg.required:
                     log = f"参数 {arg.name} 不能为空"
                     raise ApiError(400, log)
+                if value is not None and not isinstance(value, arg.type):
+                    value = init(value)
             args[arg.name] = value
 
         return args
@@ -159,7 +194,7 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
         elif isinstance(data, str):
             # str 类型直接返回
             self.write(data)
-        elif isinstance(data, int) or isinstance(data, float):
+        elif isinstance(data, (int, float)):
             # 简单类型转为 str 返回
             self.write(str(data))
         else:

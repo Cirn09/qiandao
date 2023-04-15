@@ -32,7 +32,12 @@ class TimestampHandler(ApiBase):
     api_url = "timestamp"
     api_arguments = [
         Argument(
-            name="ts", required=False, description="时间戳", type=float, default=None
+            name="timestamp",
+            required=False,
+            description="时间戳",
+            type=float,
+            default=None,
+            default_disp="当前时间",
         ),
         Argument(
             name="format",
@@ -72,15 +77,15 @@ class TimestampHandler(ApiBase):
             init=pytz.timezone,
         ),
     ]
-    api_example = {"ts": "1625068800", "format": "%Y-%m-%d %H:%M:%S"}
+    api_example = {"timestamp": "1625068800", "format": "%Y-%m-%d %H:%M:%S"}
 
-    async def get(self, ts: float | None, format: str, tz: datetime.tzinfo):
-        if ts is None:
-            ts = time.time()
-        dt_tz = datetime.datetime.fromtimestamp(ts, tz)
+    async def get(self, timestamp: float | None, format: str, tz: datetime.tzinfo):
+        if timestamp is None:
+            timestamp = time.time()
+        dt_tz = datetime.datetime.fromtimestamp(timestamp, tz)
 
         r = {
-            "timestamp": ts,
+            "timestamp": timestamp,
             "formated": dt_tz.strftime(format),
             "daysOfYear": yearday(dt_tz.year),
         }

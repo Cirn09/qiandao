@@ -12,7 +12,7 @@ from . import api
 class AboutHandler(BaseHandler):
     @tornado.web.addslash
     async def get(self):
-        await self.render('about.html', apis=api.apis, repr=repr)
+        await self.render('about.html', apis=api.apis)
         return
 
 handlers = [

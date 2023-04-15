@@ -33,6 +33,7 @@ from . import ApiBase, Argument, safe_eval, ApiError
 #     > api://api/timestamp?__fileter__=timestamp&__fileter__=weak
 #     < {"timestamp": 1625068800, "weak": "4/26"}
 #     ```
+# - 其他规范见 ApiBase 和 Argument 源码
 
 
 # 没什么用的示例 API：Echo
@@ -73,6 +74,19 @@ class EchonHandler(ApiBase):
         return d
 
 
+# 用于演示 multi 的示例 API：Sum
+class SumHandler(ApiBase):
+    api_name = "累加"
+    api_description = "输出 = sum(输入)"  # 支持 HTML 标签，比如 <br/>
+    api_url = "sum"  # 框架会自动添加前缀 /api/
+    api_arguments = [
+        Argument(name="input", required=True, description="输入", type=int, multi=True),
+    ]
+    api_example = {"input": ["1", "2", "9"]} # 传入的参数都是 str 类型，框架会自动根据 Argument 的声明进行转换
+
+    async def get(self, input: list[int]):
+        return sum(input)
+    
 # 用于演示 multi 的示例 API：Concat
 class ConcatHandler(ApiBase):
     api_name = "连接"
@@ -82,8 +96,7 @@ class ConcatHandler(ApiBase):
         Argument(name="texts", required=True, description="输入", type=str, multi=True),
         Argument(name="sep", required=True, description="n", type=str),
     ]
-    # api_example = {"texts": "测试输入", "sep": ","}
-    api_example_rendered = "concat?texts=1&texts=2&texts=9&sep=,"
+    api_example = {"texts": ["1", "2", "9"], "sep": ","}
 
     async def get(self, texts: list[str], sep: str):
         return sep.join(texts)
@@ -129,7 +142,7 @@ class ExampleErrorHandler(ApiBase):
     api_description = "引发异常的示例"
     api_url = "error"
     api_arguments = (
-        Argument("code", False, "错误代码", int, default=400),
+        Argument("code", False, "错误代码", int, default='400'),
         Argument("reason", False, "错误原因", str, default="测试错误"),
     )
     api_example = {"code": "400", "reason": "测试错误"}
@@ -159,6 +172,7 @@ class JSONHandler(ApiBase):
 handlers = (
     EchoHandler,
     EchonHandler,
+    SumHandler,
     ConcatHandler,
     ExampleEvalHandler,
     Example2Handler,

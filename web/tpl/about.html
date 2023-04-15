@@ -63,7 +63,7 @@
             {% else %}
               <td>❎</td>
               <td>{{ api.api_arguments[0].type.__name__ }}</td>
-              <td>{{ repr(api.api_arguments[0].default) }}</td>
+              <td>{{ api.api_arguments[0].default_disp }}</td>
             {% endif %}
           {% else %}
             <td>&nbsp;</td>
@@ -91,7 +91,7 @@
               {% else %}
                 <td>❎</td>
                 <td>{{ api.api_arguments[j].type.__name__ }}</td>
-                <td>{{ api.api_arguments[j].default }}</td>
+                <td>{{ api.api_arguments[j].default_disp }}</td>
               {% endif %}
             </tr>
           {% endfor %}
