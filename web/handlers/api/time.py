@@ -5,6 +5,8 @@ from tornado.gen import sleep as asleep
 
 from . import ApiBase, Argument, ApiError
 
+from config import delay_max_timeout
+
 
 class DelayHandler(ApiBase):
     api_name = "延时"
@@ -12,7 +14,7 @@ class DelayHandler(ApiBase):
     api_url = "delay"
     api_arguments = (
         Argument(
-            name="seconds", required=True, description="延迟时间（秒）,最长 30 秒", type=float
+            name="seconds", required=True, description=f"延迟时间（秒）,最长 {delay_max_timeout} 秒", type=float
         ),  # , init = lambda x: float(x) % 30
     )
     api_example = {"seconds": "1.5"}
@@ -20,8 +22,8 @@ class DelayHandler(ApiBase):
     async def get(self, seconds: float):
         if seconds < 0.0:
             raise ApiError(400, "延迟时长必须为正数")
-        if seconds > 30.0:
-            raise ApiError(400, "延迟时长不能超过 30 秒")
+        if seconds > delay_max_timeout:
+            raise ApiError(400, f"延迟时长不能超过 {delay_max_timeout} 秒")
         await asleep(seconds)
         return f"delay {seconds} seconds"
 
