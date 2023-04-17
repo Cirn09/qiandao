@@ -27,15 +27,17 @@
         <th rowspan="2">名称</th>
         <th rowspan="2">地址</th>
         <th rowspan="2">说明</th>
-        <th colspan="5">参数</th>
+        <th colspan="7">参数</th>
         <th rowspan="2">用例</th>
       </tr>
       <tr class="tablesorter-childRow">
         <th>名称</th>
         <th>描述</th>
-        <th>必须</th>
         <th>类型</th>
         <th>默认</th>
+        <th>必须</th>
+        <th>多重</th>
+        <th>From body</th>
       </tr>
     </thead>
 
@@ -56,16 +58,14 @@
           {% if args > 0 %}
             <td>{{ api.api_arguments[0].name }}</td>
             <td>{{ api.api_arguments[0].description | safe }}</td>
-            {% if api.api_arguments[0].required %}
-              <td>✅</td>
-              <td>{{ api.api_arguments[0].type.__name__ }}</td>
-              <td>❎</td>
-            {% else %}
-              <td>❎</td>
-              <td>{{ api.api_arguments[0].type.__name__ }}</td>
-              <td>{{ api.api_arguments[0].default_disp }}</td>
-            {% endif %}
+            <td>{{ api.api_arguments[0].type.__name__ }}</td>
+            <td>{{ api.api_arguments[0].default_disp }}</td>
+            <td>{{ "✅" if api.api_arguments[0].required else " " }}</td>
+            <td>{{ "✅" if api.api_arguments[0].multi else " " }}</td>
+            <td>{{ "✅" if api.api_arguments[0].from_body else " " }}</td>
           {% else %}
+            <td>&nbsp;</td>
+            <td>&nbsp;</td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
             <td>&nbsp;</td>
@@ -84,15 +84,11 @@
             <tr class="tablesorter-childRow">
               <td>{{ api.api_arguments[j].name }}</td>
               <td>{{ api.api_arguments[j].description | safe }}</td>
-              {% if api.api_arguments[j].required %}
-                <td>✅</td>
-                <td>{{ api.api_arguments[j].type.__name__ }}</td>
-                <td>❎</td>
-              {% else %}
-                <td>❎</td>
-                <td>{{ api.api_arguments[j].type.__name__ }}</td>
-                <td>{{ api.api_arguments[j].default_disp }}</td>
-              {% endif %}
+              <td>{{ api.api_arguments[j].type.__name__ }}</td>
+              <td>{{ api.api_arguments[j].default_disp }}</td>
+              <td>{{ "✅" if api.api_arguments[j].required else " " }}</td>
+              <td>{{ "✅" if api.api_arguments[j].multi else " " }}</td>
+              <td>{{ "✅" if api.api_arguments[j].from_body else " " }}</td>
             </tr>
           {% endfor %}
         {% endif %}

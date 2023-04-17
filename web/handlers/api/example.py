@@ -66,7 +66,7 @@ class EchonHandler(ApiBase):
         Argument(name="text", required=True, description="输入", type=str),
         Argument(name="n", required=True, description="n", type=int),
     ]
-    api_example = {"text": "测试输入", "n": "3"}
+    api_example = {"text": "测试输入", "n": 3}
     api_example_rendered = "echon?text=测试输入&n=3&__filter__=text_0"
 
     async def get(self, text: str, n: int):
@@ -82,11 +82,12 @@ class SumHandler(ApiBase):
     api_arguments = [
         Argument(name="input", required=True, description="输入", type=int, multi=True),
     ]
-    api_example = {"input": ["1", "2", "9"]} # 传入的参数都是 str 类型，框架会自动根据 Argument 的声明进行转换
+    api_example = {"input": [1, 2, 9]}  # 传入的参数都是 str 类型，框架会自动根据 Argument 的声明进行转换
 
     async def get(self, input: list[int]):
         return sum(input)
-    
+
+
 # 用于演示 multi 的示例 API：Concat
 class ConcatHandler(ApiBase):
     api_name = "连接"
@@ -142,10 +143,10 @@ class ExampleErrorHandler(ApiBase):
     api_description = "引发异常的示例"
     api_url = "error"
     api_arguments = (
-        Argument("code", False, "错误代码", int, default='400'),
+        Argument("code", False, "错误代码", int, default=400),
         Argument("reason", False, "错误原因", str, default="测试错误"),
     )
-    api_example = {"code": "400", "reason": "测试错误"}
+    api_example = {"code": 400, "reason": "测试错误"}
 
     async def get(self, code: int, reason: str):
         if code == 999:
@@ -153,20 +154,24 @@ class ExampleErrorHandler(ApiBase):
         raise ApiError(code, reason)
 
 
-# 未能融入 API 框架的 POST JSON 传参示例
-# 和原生的 tornado 区别不大了
 class JSONHandler(ApiBase):
     api_name = "json echo"
-    api_description = "未能融入 API 框架的 POST JSON 传参示例"
+    api_description = "POST JSON 传参示例"
     api_url = "json"
+    api_arguments = [
+        Argument(name="indent", required=False, description="缩进", type=int, default=4),
+        Argument(
+            name="data",
+            required=True,
+            description="输入 JSON",
+            type=json,
+            init=json.loads,
+            from_body=True,
+        ),
+    ]
 
-    async def post(self):
-        if not self.request.headers.get("Content-Type", "").startswith(
-            "application/json"
-        ):
-            raise ApiError(400, "Content-Type must be application/json")
-        data = json.loads(self.request.body.decode())  # 更合适的方法是读取 HTTP 头中声明的编码类型
-        self.api_write_json(data)  # 使用 self.api_write_json() 不会受到 __filter__ 影响
+    async def post(self, data: dict, indent: int):
+        self.api_write_json(data, indent=indent)  # 使用 self.api_write_json() 不会受到 __filter__ 影响
 
 
 handlers = (

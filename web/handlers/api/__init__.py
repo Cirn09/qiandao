@@ -20,6 +20,8 @@ class ApiError(HTTPError):
         # 对于 HTTPError，log_message 是打印到控制台的内容，reason 是返回给用户的内容
         # 我们希望 API 的用户可以直接从 Web 界面看到错误信息，所以将 log_message 和 reason 设置为相同的内容
         super().__init__(status_code, reason, reason=reason, *args, **kwargs)
+        
+BaseType = typing.Union[str, int, float, bool, None]
 
 
 @dataclass()
@@ -45,15 +47,18 @@ class Argument(object):
     """是否为多值参数，比如 ?a=1&a=2&a=3 -> a=[1,2,3]"""
     # multi 为 True 时，参数类型为 list[self.type]
     # multi 为 True 时，default 必须为 list 或 tuple（如果 default 为 None，会被自动转换为空 tuple）"""
-    default: str | typing.Sequence | None = None
+    default: BaseType | typing.Iterable[BaseType] = None
     """参数默认值
-    如果设置了 multi，则 default 类型须为 Sequence[self.type]（默认为空 tuple）；
+    如果设置了 multi，则 default 类型须为 Iterable[str|int|float|bool]（默认为空 tuple）；
     如果设置了 required，则 default 强制为 None；
-    其他情况下 default 类型应为 Optionl[str]。
+    其他情况下 default 类型应为 Optionl[str|int|float|bool]。
     
     API 被调用时，用户若为提供该参数，则使用 init(default) 作为参数值。"""
     default_disp: str | None = None
     """默认值在前端的显示值，默认为 repr(self.default)"""
+    from_body: bool = False
+    """从 request.body 初始化，比如 POST JSON 情形
+    与 multi 互斥"""
 
     def __post_init__(self):
         if self.init is None:
@@ -63,12 +68,17 @@ class Argument(object):
 
         if self.required:
             self.default = None
+            self.default_disp = '❎'
 
         if self.multi and self.default is None:
             self.default = tuple()
 
         if self.default_disp is None:
             self.default_disp = repr(self.default)
+
+        if self.multi and self.from_body:
+            # multi 和 from_body 互斥
+            raise ValueError(f"Argument {self.name} is multi but from_body")
 
 
 class ApiMetaclass(type):
@@ -140,10 +150,10 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
     api_description: str
     '''API 功能说明，支持 HTML 标签
     例如："使用正则表达式匹配字符串"'''
-    api_arguments: typing.Sequence[Argument] = []
+    api_arguments: typing.Iterable[Argument] = []
     """API 的参数列表
     例如：[Argument(name="seconds", required=True, description="延时时长", type=float)]"""
-    api_example: dict[str, str | typing.Sequence[str]] = {}
+    api_example: dict[str, BaseType | typing.Iterable[BaseType]] = {}
     r"""API 示例
     例如：{'seconds': 1.5}"""
     api_example_rendered: str
@@ -162,12 +172,14 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
                 if not vs:
                     if arg.required:
                         raise ApiError(400, f"参数 {arg.name} 不能为空")
-                    vs: typing.Sequence = arg.default  # type: ignore
+                    vs: typing.Iterable[str] = arg.default  # type: ignore
                 value = []
                 for v in vs:
                     if not isinstance(v, arg.type):
                         v = init(v)
                     value.append(v)
+            elif arg.from_body:
+                value = init(self.request.body.decode())
             else:
                 value = self.get_argument(arg.name, arg.default)  # type: ignore
                 if value is None and arg.required:
