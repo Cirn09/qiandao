@@ -209,6 +209,9 @@ class ApiBase(BaseHandler, metaclass=ApiMetaclass):
         elif isinstance(data, (int, float)):
             # 简单类型转为 str 返回
             self.write(str(data))
+        elif isinstance(data, bytes):
+            self.set_header("Content-Type", "application/octet-stream")
+            self.write(data)
         else:
             # 其他类型转换为 JSON
             self.api_write_json(data)

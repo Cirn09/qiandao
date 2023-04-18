@@ -19,6 +19,7 @@ from . import ApiBase, Argument, safe_eval, ApiError
 # - 所有的 key 都使用 ASCII 字符，而不是中英文混用
 # - 返回值：简单类型直接返回（str、int、float）；
 #         dict 只有一对键值对的直接返回值，多条返回值的转为 JSON 格式；
+#         bytes 类型会设置 Content-Type: application/octet-stream 头，然后直接返回；
 #         其他情形都转为 JSON 格式。
 #         如果希望避免不可控，可以将返回值处理为 str 类型。
 #     支持传参 `__filter__` 对返回 JSON 进行过滤，过滤后只剩一对的，直接返回值。
