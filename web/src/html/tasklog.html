@@ -1,0 +1,62 @@
+{% extends "base.html" %}
+
+{% block title %}QD 日志{% endblock %}
+
+{% block header %}
+{{ super() }}
+<link href="{{ static_url('my.css') }}" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block body %}
+{{ utils.header(current_user, title="QD日志", sup=False) }}
+
+<section>
+  <div class="container">
+    <h2>
+      任务执行日志
+      <a class="btn btn-default" data-method="GET" href="/task/{{ task.id }}/log/del" title="清空任务日志">清空
+      </a>
+
+    </h2>
+    <div>
+      <button type="button" class="btn btn-default" href="javascript:void(0);" onClick="deldaylog()">保留</a>
+      </button>
+      <input type="text" id='day' name="tasklog.logDay"  oninput = "value=value.replace(/[^\d]/g,'')">天的日志
+    </div>
+	<table class="table">
+      <thead>
+        <tr>
+          <th>时间</th>
+          <th>状态</th>
+          <th>日志</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for log in tasklog | sort(reverse=True, attribute="ctime") %}
+        <tr>
+          <td style="white-space:nowrap">{{ format_date(log.ctime) }}</td>
+          <td style="white-space:nowrap">
+            {% if log.success %}
+            <span class="text-success">成功</span>
+            {% else %}
+            <span class="text-danger">失败</span>
+            {% endif %}
+          </td>
+          <td class="autowrap showbut" id="log{{loop.index}}">
+            {% if log.msg %}
+            {% for _log in log.msg.split('\\r\\n') %}
+              {{ _log  }}<br>
+            {% endfor %}
+          <button class="btn hljs-button" data-clipboard-target="#log{{ loop.index }}">复制</button>
+          {% else %}
+          {{ log.msg  }}
+          <button class="btn hljs-button" data-clipboard-target="#log{{ loop.index }}">复制</button>
+          {% endif %}</td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+</section>
+<script src="{{ static_url('task.log.js') }}"></script>
+{% endblock %}

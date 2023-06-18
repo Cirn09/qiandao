@@ -1,0 +1,206 @@
+{% macro qd_title(title="QD框架", sup=True) %}
+<h2 class="text-center">{{ title }}<sup id="qd_header_sup">{% if sup %}{{ version }}{% endif %}</sup></h2>
+<script>
+  var qd_header_sup = document.getElementById('qd_header_sup')
+  qd_header_sup.innerHTML = get_holiday_or_version(qd_header_sup.innerHTML)
+</script>
+{% endmacro %}
+
+{% macro header(current_user=True, title="QD框架", sup=True, about=True) %}
+<header>
+  <div class="container">
+    {{ qd_title(title, sup) }}
+    <div class="buttons">
+      <a href="/" class="btn btn-default pull-left">首页</a>
+      {% if about %}
+      <a href="/about/" class="btn btn-default pull-left">常用API/过滤器</a>
+      {% endif %}
+      {% if current_user %}
+      <a href="/logout" class="btn btn-default pull-right">登出</a>
+      {% else %}
+      <a href="/register" class="btn btn-default pull-right">注册</a>
+      {% endif %}
+
+    </div>
+  </div>
+</header>
+{% endmacro %}
+
+{% macro modal_load() %}
+<div class="modal fade" id="modal_load" tabindex="-1" role="dialog" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+    </div>
+  </div>
+</div>
+
+<script>
+  $(function() {
+    var lock = false;
+    $('#modal_load').on('hide.bs.modal', function() {
+      return !lock;
+    });
+    $(document).on('click', ".modal_load", function() {
+      if (lock) return false;
+
+      var $this = $(this);
+      var text = $this.text();
+      //$this.text('loading...');
+      lock = true;
+      $('#modal_load .modal-content').html('<h1 class="text-center alert alert-info">loading...</h1>');
+      $('#modal_load').modal('show');
+
+      $.ajax($this.attr('href'), {
+        type: $this.data('load-method') || 'GET',
+        data: $this.data('data-callback') && $this.data('data-callback')($this) || '',
+      })
+      .done(function(data) {
+        $('#modal_load .modal-content').html(data);
+      })
+      .fail(function(jxhr, data) {
+        $('#modal_load .modal-content')
+        .html('<h1 class="text-center alert alert-danger">运行失败</h1><div class="well"></div>')
+        .find('.well').text(jxhr.responseText);
+      })
+      .always(function(jxhr) {
+        if (jxhr.status == 504) {
+          $('#modal_load .modal-content')
+          .html('<h1 class="text-center alert alert-danger">超时</h1><div class="well"></div>')
+          .find('.well').text('前端回调获取响应超时, 请耐心等待或刷新页面后查看执行结果');
+        }
+        lock = false;
+      })
+      return false;
+    })
+  })
+</script>
+{% endmacro %}
+
+{% macro apost() %}
+<script>
+  $(function() {
+    $(document).on('click', 'a[data-method]', function() {
+      var $this = $(this);
+      if ($this.data('confirm') && !window.confirm($this.data('confirm'))) {
+        return false;
+      }
+      var prompt_result = '';
+      if ($this.data('prompt') && !(prompt_result = window.prompt($this.data('prompt')))) {
+        return false;
+      }
+      var form = $('<form></form>')
+        .attr('method', $this.data('method'))
+        .attr('action', $this.attr('href'));
+      if (prompt_result) {
+        $('<input>')
+          .attr('name', 'prompt')
+          .attr('value', prompt_result)
+          .appendTo(form);
+      }
+      form
+        .appendTo(document.body)
+        .submit();
+      return false;
+    })
+  })
+</script>
+{% endmacro %}
+
+{% macro submit_loading() %}
+<script>
+  $(document).on('submit', 'form', function() {
+    $("button[type=submit]").button('loading');
+  })
+</script>
+{% endmacro %}
+
+{% macro input(name, label=None, type="text", value=None, placeholder=None) %}
+{% set label = label if label else name %}
+<div class="form-group">
+  <label class="control-label" for="input-{{ name }}">{{ label }}</label>
+  <input type="{{ type }}" class="form-control" name="{{ name }}" id="input-{{ name }}"
+  placeholder="{% if placeholder %}{{ placeholder }}{% else %}请输入 {{ label }}{% endif %}"
+  {% if value is not none %}value="{{ value }}"{% endif %}>
+  {% if p %}<p class="help-block">{{ p }}</p>{% endif %}
+</div>
+{% endmacro %}
+
+{% macro tplname(tpl) %}
+{% if tpl.note %}
+<span data-toggle="popover" title="{{ tpl.siteurl }}" data-content="{{ tpl.note }}">{{ tpl.sitename or "未命名" }}</span>
+{% else %}
+<span data-toggle="popover" data-content="{{ tpl.siteurl }}">{{ tpl.sitename or "未命名" }}</span>
+{% endif %}
+{% endmacro %}
+
+{% macro username(user) %}
+{% if user.email %}
+<span data-toggle="popover" data-content="{{ user.email }}">{{ user.nickname or '无名氏' }}</span> {{ '\u2714\ufe0e' if user.email_verified }}
+{% else %}
+<span>{{ user.nickname or '无名氏' }}</span> {{ '\u2714\ufe0e' if user.email_varified }}
+{% endif %}
+{% endmacro %}
+
+{% macro task_new_scripts() %}
+<script>
+$(function() {
+  // load tpl variables
+  $('select[name=_binux_tplid]').on('change', function() {
+    $('#variables').load("/tpl/"+$(this).val()+"/var");
+  });
+
+  // auto fill note
+  $('#variables').on('change', '[name=username]', function() {
+    if ($('#note').val() == '') {
+      $('#note').val($(this).val());
+    }
+  });
+
+  //if ($('body').attr('get-cookie') == 'true') {
+  //  $('[data-toggle=get-cookie][disabled]').attr('disabled', false);
+  //}
+
+  // fill cookie
+  $('#variables').on('click', '[data-toggle=get-cookie]', function() {
+    var $this = $(this);
+    if ($this.attr('disabled'))
+      return;
+
+    if ($('body').attr('get-cookie')  != 'true') {
+        //$this.html('没有插件，详情F12')
+        //console.log('如需要插件请访问 https://github.com/qd-today/get-cookies/ 下载并手动安装插件');
+        if($this.attr('getmod')==1){
+          $this.attr('href', 'https://github.com/qd-today/get-cookies/').attr('target', '_blank').html('安装插件后请刷新');
+        }else{$this.attr('getmod',1).html('再次点击前往安装 Get-Cookies 插件')}
+    }
+  });
+  window.addEventListener("message", function(event) {
+    if (event.origin != window.location.origin) {
+      return ;
+    }
+
+    var cookie = event.data;
+    var cookie_str = "";
+    for (key in cookie) {
+      cookie_str += key+'='+cookie[key]+'; '
+    }
+    if (cookie_str == '') {
+      // alert('没有获得cookie，您是否已经登录？');
+      return;
+    }
+    $('#input-cookie').val(cookie_str);
+  }, false);
+})
+</script>
+{% endmacro %}
+
+{% macro form_select2(id = ".form-control", width = "100%") %}
+<script>
+  var _id = {{ id|tojson }};
+  var _width = {{ width|tojson }};
+  $.fn.modal.Constructor.prototype.enforceFocus = function(){}
+  $(document).ready(function() {
+    $(_id).select2({width: _width });
+});
+</script>
+{% endmacro %}

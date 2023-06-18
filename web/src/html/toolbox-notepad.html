@@ -1,0 +1,57 @@
+{% extends "base.html" %}
+
+{% block title %}QD 记事本{% endblock %}
+
+{% block header %}
+{{ super() }}
+<link href="{{ static_url('my.css') }}" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block body %}
+{{ utils.header(current_user) }}
+
+<section>
+  <div class="container">
+    <h2>
+      记事本
+    </h2>
+    <div id="run-result"></div>
+    <div class="form-group">
+      <label class="control-label" for="note" ><font color='red'>除查询以外, 必须输入账号密码验证！！！</font></label>
+      <div>
+      <label class="control-label" for="note">邮箱</label>
+      </div>
+      <input type="text" class="form-control" name="email" value="" id="email" placeholder="必须输入账号验证">
+      <label class="control-label" for="note">密码</label>
+      <input type='password' class="form-control" name="pwd" value="" id="pwd" placeholder="必须输入密码验证">
+    </div>
+    <div class="form-group">
+      <label class="control-label" for="note">记事本编号:</label>
+      <input id="notepad_list" type="text" class="form-control" list="NotePadIDList" value="{{notepad_id}}"></input>
+      <datalist id="NotePadIDList">
+        {% for notepad in notepad_list %}
+        <option value="{{ notepad.notepadid }}">{{ (notepad.content or 'None')|truncate(length=26, killwords=False, end='...', leeway=4) }}</option>
+        {% endfor %}
+      </datalist>
+    </div>
+    <div class="text-right">
+      <button id="notepad_list_btn" type="submit" data-loading-text="loading..." class="btn btn-primary" onclick="window.location.assign('/util/toolbox/{{userid}}/notepad/'+($('#notepad_list')[0].value || '0'))">查询</button>
+      <button id="notepad_list_btn_add" type="submit" data-loading-text="loading..." class="btn btn-primary" onclick="notepadlist('add')">新建</button>
+      <button id="notepad_list_btn_del" type="submit" data-loading-text="loading..." class="btn btn-primary" onclick="notepadlist('delete')">删除</button>
+    </div>
+    <div class="form-group">
+      <label class="control-label" for="note">记事本内容:</label>
+      <textarea  class="form-control" rows="10" name="New_notepad_content" id="New_notepad_content" >{% for notepad in notepad_list %}{% if notepad.notepadid == notepad_id and notepad.content %}{{notepad.content}}{% endif %}{% endfor %}</textarea>
+    </div>
+    <div class="text-right">
+      <button id="ban" name="banbtn" type="submit" data-loading-text="loading..." class="btn btn-primary" onclick="send2notepad('append')" title="将文本框内容追加至记事本中">追加</button>
+      <button id="activate" name="activatebtn" type="submit" data-loading-text="loading..." class="btn btn-primary"  onclick="send2notepad('write')" title="将文本框内容复写至记事本中">复写</button>
+    </div>
+  </div>
+</section>
+
+
+
+<script src="{{ static_url('toolbox.js') }}"></script>
+
+{% endblock %}

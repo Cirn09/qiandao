@@ -1,0 +1,35 @@
+{% import "utils.html" as utils %}
+<form method="POST" action="/tpl/{{ tplid }}/group">
+  <h2 class="text-center">设置分组</h2>
+  <hr>
+
+  <div class="use_redpackets_content" id="oneCheck">
+    {% for group in _groups %}
+    <div class="checkbox">
+      <label>
+        <input type="checkbox" name="{{ group.encode('UTF-8') }}"  {% if group == groupNow %}  checked="" {% endif %}> {{ group }}
+      </label>
+    </div>
+    {% endfor %}
+  </div>
+
+
+  <div class="form-group">
+    <label class="control-label" for="note">设置新分组</label>
+	<!-- MY页面-增加提示语 -->
+    <input type="text" class="form-control" name="New_group" value="" id="New_group" placeholder="尽可能填写15个字符以内">
+	<!-- MY页面-增加备注图标 -->
+	<span class="glyphicon glyphicon-file form-control-feedback" aria-hidden="true"></span>
+  </div>
+
+  <div class="text-right">
+    {% if current_user %}
+    <button id="send" data-method="POST" href="/tpl/{{ tplid }}/group" class="btn btn-primary">提交</button>
+    {% endif %}
+  </div>
+
+  <script src="{{ static_url('tpl.setGroup.js') }}"></script>
+
+  {{ utils.task_new_scripts() }}
+  {{ utils.submit_loading() }}
+</form>

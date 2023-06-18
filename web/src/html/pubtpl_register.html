@@ -1,0 +1,28 @@
+<form method="POST" action="/subscribe/signup_repos/{{userid}}/">
+<h2 class="text-center">注册仓库</h2>
+<hr>
+  <div id="run-result"></div>
+
+  {% if current_user %}
+  <div class="form-group">
+    <!-- 仓库名 -->
+    <label class="control-label" for="note">仓库名</label>
+    <input type="text" class="form-control" name="reponame" value="" id="reponame" >
+    <!-- 仓库URL -->
+    <label class="control-label" for="note">仓库URL</label>
+    <input type="text" class="form-control" name="reponame" value="" id="repourl">
+    <!-- 仓库分支 -->
+    <label class="control-label" for="note">仓库分支</label>
+    <input type="text" class="form-control" name="repobranch" value="" id="repobranch">
+    <label>
+      <input type="checkbox" id="repoacc" name="repoacc" > 加速(仅支持github)
+    </label>
+  </div>
+  {% endif %}
+
+  <div class="text-right">
+    <button id="register" name="regbtn" type="button" data-loading-text="loading..." class="btn btn-primary">提交</button>
+  </div>
+
+  <script src="{{ static_url('tpl.register.js') }}"></script>
+</form>

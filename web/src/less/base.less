@@ -1,0 +1,114 @@
+/* vim: set et sw=2 ts=2 sts=2 ff=unix fenc=utf8: */
+/* Author: Binux<i@binux.me> */
+/*         http://binux.me */
+/* Created on 2014-08-08 23:02:39 */
+
+// @import (css) "bootstrap/dist/css/bootstrap.min.css"; // scss
+// @import (css) "select2/dist/css/select2.min.css"; // scss
+// @import (css) "nprogress/nprogress.css"; // css
+// @import "font-awesome/less/font-awesome.less"; // less
+// @import (css) "tablesorter/dist/css/theme.bootstrap_3.min.css"; // jquery.tablesorter // scss & less
+
+@import (css) "bootstrap"; // scss
+@import (css) "select2"; // scss
+@import "font-awesome"; // less
+
+@import (css) "nprogress/nprogress.css"; // css
+@import (css) "tablesorter/dist/css/theme.bootstrap_3.min.css"; // jquery.tablesorter // scss & less
+
+
+html {
+  position: relative;
+  min-height: 95%;
+}
+
+body {
+  margin-bottom: 60px;
+  background: url(/src/img/body.jpg) repeat-x #FFF;
+  /* 修改-新加-头部图片 */
+
+}
+
+footer {
+  position: absolute;
+  height: 30px;
+  width: 100%;
+  bottom: 0;
+  margin: 10px 0;
+}
+
+h1>a {
+  color: black;
+  text-decoration: none;
+
+  &:hover,
+  &:focus {
+    color: black;
+    text-decoration: none;
+  }
+}
+
+.form-group {
+  position: relative;
+
+  .control-label .control-helper {
+    position: absolute;
+    top: 0;
+    right: 0;
+
+    &[disabled] {
+      color: darkgray;
+      text-decoration: none;
+      cursor: default;
+    }
+  }
+}
+
+.autowrap {
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+.showbut {
+  position: relative;
+}
+
+// .showbut:hover .hljs-button {
+//   display: block
+// }
+
+.hljs-button {
+  display: none;
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  font-size: 12px;
+  color: #4d4d4d;
+  background-color: white;
+  padding: 2px 8px;
+  /* margin: 8px; */
+  border-radius: 4px;
+  cursor: pointer;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
+
+  .showbut:hover {
+    display: block
+  }
+}
+
+th,
+.apitable td {
+  text-align: center;
+  vertical-align: middle !important;
+}
+
+.apitable td div {
+  max-width: 400px;
+  max-height: 80px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+[data-toggle=popover] {
+  cursor: pointer;
+}

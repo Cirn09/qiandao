@@ -1,0 +1,52 @@
+{% import "utils.html" as utils %}
+<form method="POST" action="/user/{{ userid }}/pushsw">
+  <h2 class="text-center">注册推送</h2>
+  <hr>
+
+  <div id="run-result"></div>
+
+  {% if current_user %}
+  <div class="form-group">
+    <!-- 注册barkurl -->
+    <label class="control-label" for="note">BarkUrl</label>
+    <input type="text" class="form-control" name="barkurl" value="" id="barkurl" placeholder="请输入 BarkUrl">
+    <!-- 注册S酱 -->
+    <label class="control-label" for="note">Server酱</label>
+    <input type="text" class="form-control" name="skey" value="" id="skey" placeholder="请前往 https://sct.ftqq.com/ 获取Sendkey">
+    <!-- 注册wxpusher -->
+    <label class="control-label" for="note">WxPusher</label>
+    <input type="text" class="form-control" name="wxpusher_token" value="" id="wxpusher_token" placeholder="(用;来分割) APPTOKEN;WxPusher_UID">
+
+    <!-- 注册企业微信 Pusher -->
+    <label class="control-label" for="note">企业微信 Pusher</label>
+    <input type="text" class="form-control" name="qywx_token" value="" id="qywx_token" placeholder="(用;来分割) 企业ID;应用ID;应用密钥;自定推送图片URL或Media_id(非必需);代理URL">
+    <!-- 注册Tg Bot -->
+    <label class="control-label" for="note">Tg Bot 后三项非必需</label>
+    <input type="text" class="form-control" name="tg_token" value="" id="tg_token" placeholder="(用;来分割) TG_TOKEN;TG_USERID;TG_HOST;PROXY地址;自定推送图片URL">
+    <!-- 注册DingDing Bot -->
+    <label class="control-label" for="note">DingDing Bot</label>
+    <input type="text" class="form-control" name="dingding_token" value="" id="dingding_token" placeholder="(用;来分割) DINGDING_TOKEN;自定推送图片URL(非必需)">
+    <!-- 注册企业微信 WebHook -->
+    <label class="control-label" for="note">企业微信 WebHook</label>
+    <input type="text" class="form-control" name="qywx_webhook" value="" id="qywx_webhook" placeholder="企业微信 WebHook Key">
+  </div>
+  <div class="form-group">
+    <label class="control-label" for="note" ><font color='red'>注册不需要填写账号密码，查看前值需要</font></label><br>
+    <label class="control-label" for="note">邮箱</label>
+    <input type="text" class="form-control" name="adminmail" value="" id="adminmail" placeholder="注册不需要填写账号">
+    <label class="control-label" for="note">密码</label>
+    <input type='password' class="form-control" name="adminpwd" value="" id="adminpwd" placeholder="注册不需要填写密码">
+  </div>
+  {% endif %}
+
+  <div class="text-right">
+    <button id="showpvar" name="showpvarbtn" data-loading-text="loading..." class="btn btn-default" >前值</button>
+    <button id="test" name="testbtn" data-loading-text="loading..." class="btn btn-default">测试</button>
+    <button id="register" name="regbtn" type="submit" data-loading-text="loading..." class="btn btn-primary">提交</button>
+  </div>
+
+  <script src="{{ static_url('user.registerPusher.js') }}"></script>
+
+  {{ utils.task_new_scripts() }}
+  {{ utils.submit_loading() }}
+</form>

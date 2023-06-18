@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}QD 日志{% endblock %}
+
+{% block header %}
+{{ super() }}
+<link href="{{ static_url('my.css') }}" rel="stylesheet" type="text/css">
+{% endblock %}
+
+{% block body %}
+{{ utils.header(current_user) }}
+
+<section>
+  <div class="container">
+    <h2>
+      自定义推送
+    </h2>
+    <div id="run-result"></div>
+
+    {% if current_user %}
+    <div class="form-group">
+      请求方法：
+      <select id="pusher_method">
+      <option {% if diypusher.mode == 'GET' %} selected="selected" {% endif %} value="GET">GET</option>
+      <option {% if diypusher.mode == 'POST' %} selected="selected" {% endif %} value="POST">POST</option>
+      </select>
+      <div id='pusher_get_content' {% if diypusher.mode == 'GET' %} style="display: block;" {% else %} style="display: none;" {% endif %}>
+        <label class="control-label" for="pusher_get_url" ><font color='red'>{log}和{t}表示要替换的日志和标题</font></label><br>
+        <label class="control-label" for="pusher_get_url" >URL:</label><br>
+        <input type="text" class="form-control" name="pusher_get_url" {% if diypusher.curl and diypusher.mode == 'GET'%} value="{{diypusher.curl}}" {% endif %} id="pusher_get_url" placeholder="Example：https://Bark链接/推送标题/{t}/{log}" >
+        <label class="control-label" for="pusher_get_header" >Header 使用json格式(半角双引号)，如{&quot;a&quot;:&quot;{log}&quot;,&quot;c&quot;:&quot;{t}&quot;}</label><br>
+        <input type="text" class="form-control" name="pusher_get_header" {% if diypusher.headers and diypusher.mode == 'GET' %} value="{{ diypusher.headers }}" {% endif %} id="pusher_get_header" placeholder="Example：{&quot;a&quot;:&quot;{log}&quot;,&quot;c&quot;:&quot;{t}&quot;}">
+      </div>
+      <div id='pusher_post_content' {% if diypusher.mode == 'POST' %} style="display: block;" {% else %} style="display: none;" {% endif %}>
+        <label class="control-label" for="note" ><font color='red'>{log}和{t}表示要替换的日志和标题</font></label><br>
+        <input type="text" class="form-control" name="pusher_post_url"  {% if diypusher.curl and diypusher.mode == 'POST' %} value="{{diypusher.curl}}" {% endif %} id="pusher_post_url" placeholder="URL">
+        <input type="text" class="form-control" name="pusher_post_header" {% if diypusher.headers and diypusher.mode == 'POST' %} value="{{ diypusher.headers }}" {% endif %} id="pusher_post_header" placeholder="post_header(注意使用半角双引号)，如{&quot;a&quot;:&quot;{log}&quot;,&quot;c&quot;:&quot;{t}&quot;}">
+        <select id="pusher_post_data_method">
+          <option {% if diypusher.postMethod == 'json' %} selected="selected" {% endif %} value="json">application/json</option>
+          <option {% if diypusher.postMethod == 'x-www-form-urlencoded' %} selected="selected" {% endif %} value="x-www-form-urlencoded">application/x-www-form-urlencoded</option>
+        </select><br>
+        <label class="control-label" for="note" >POST Data</label><br>
+        <input type="text" class="form-control" name="pusher_post_data" {% if diypusher.postData and diypusher.mode == 'POST' %} value="{{ diypusher.postData }}" {% endif %} id="pusher_post_data" placeholder="使用json格式(注意使用半角双引号)，如{&quot;a&quot;:&quot;{log}&quot;,&quot;c&quot;:&quot;{t}&quot;}">
+      </div>
+    {% endif %}
+
+    <div class="text-right">
+      <button id="test" name="testbtn" data-loading-text="loading..." class="btn btn-default">测试</button>
+      <button id="register" name="regbtn" type="submit" data-loading-text="loading..." class="btn btn-primary">提交</button>
+    </div>
+
+
+  </div>
+<script src="{{ static_url('user.RegisterCusPusher.js') }}"></script>
+{% endblock %}
+

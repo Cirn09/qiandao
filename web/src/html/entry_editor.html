@@ -1,0 +1,460 @@
+{% raw %}
+<!--edit entry modal-->
+<div class="modal fade" id="edit-entry" ng-controller="EntryCtrl">
+  <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+
+
+      <!-- header -->
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal"><span aria-hidden="true">&times;</span><span class="sr-only">Close</span></button>
+        <ul class="nav nav-pills">
+          <li ng-class="{active: panel=='request'}">
+            <a href="javascript:void(0)" ng-click="panel='request'">请求 /Request</a>
+          </li>
+          <li ng-class="{active: panel=='response'}">
+            <a href="javascript:void(0)" ng-click="panel='response'">响应 /Response</a>
+          </li>
+          <li ng-class="{active: panel=='test'}">
+            <a href="javascript:void(0)" ng-click="panel='test'">测试 /Test</a>
+          </li>
+          <li ng-class="{active: panel=='preview'}">
+            <a href="javascript:void(0)" ng-click="panel='preview'">预览 /Preview</a>
+          </li>
+          <li ng-class="{active: panel=='preview-headers'}" ng-show="preview">
+            <a href="javascript:void(0)" ng-click="panel='preview-headers'">结果 /Headers</a>
+          </li>
+        </ul>
+      </div>
+
+
+      <!-- request -->
+      <div class="modal-body" ng-show="panel=='request'">
+
+        <!-- url and method and comment-->
+        <dl class="dl-horizontal">
+          <dt title="请求 URL">Request URL</dt>
+          <dd>
+            <div class="contentedit-wrapper" ng-bind-html="variables_wrapper(entry.request.url, 'request url')"></div>
+            <div class= "plaintext_only" contenteditable="" style="display: none" ng-model="entry.request.url"></div>
+          </dd>
+          <dt title="请求方式">Request Method</dt>
+          <dd>
+            <div class= "plaintext_only" contenteditable="" data-ph="request method" ng-model="entry.request.method"></div>
+          </dd>
+          <dt title="请求注释">Request Comment</dt>
+          <dd>
+            <div class= "plaintext_only" contenteditable="" data-ph="request comment" ng-model="entry.comment"></div>
+          </dd>
+        </dl>
+
+        <!-- query string -->
+        <details open onclick="return false">
+          <summary title="查询字符串参数">
+            Query String Parameters
+            <a class="btn btn-info btn-xxs"
+              ng-click="entry.request.queryString.push({name: ':key', value: ':value'})">ADD</a>
+          </summary>
+          <div editablelist="entry.request.queryString"></div>
+        </details>
+
+        <!-- headers -->
+        <details open onclick="return false">
+          <summary title="请求头">
+            Request Headers
+            <a class="btn btn-info btn-xxs"
+              ng-click="entry.request.headers.push({name:'', value:'', checked: true})">ADD</a>
+          </summary>
+          <div editablelist="entry.request.headers"></div>
+        </details>
+        <!-- headers end -->
+
+
+        <!-- cookies -->
+        <details open onclick="return false">
+          <summary title="Cookies">
+            Cookies
+            <a class="btn btn-info btn-xxs"
+              ng-click="entry.request.cookies.push({name:'', value:'', checked:true})">ADD</a>
+          </summary>
+          <div editablelist="entry.request.cookies"></div>
+        </details>
+        <!-- cookie end -->
+
+        <!--post data-->
+        <details open onclick="return false" ng-if="entry.request.postData.text || entry.request.method === 'POST'">
+          <summary title="请求消息体">
+            Request Payload
+            <a class="btn btn-info btn-xxs" ng-if="entry.request.postData.params && entry.request.postData.mimeType.indexOf('application/x-www-form-urlencoded') >= 0"
+              ng-click="entry.request.postData.params.push({name:'', value:''})">ADD</a>
+          </summary>
+          <pre class="contentedit-wrapper" ng-bind-html="variables_wrapper(entry.request.postData.text)"></pre>
+          <textarea contenteditable style="width: 100%" rows="5" onfocus="$(this).height($(this)[0].scrollHeight);" ng-model="entry.request.postData.text" ></textarea>
+          <div ng-if="entry.request.postData.params && entry.request.postData.mimeType.indexOf('application/x-www-form-urlencoded') >= 0">
+            <div editablelist="entry.request.postData.params"></div>
+          </div>
+        </details>
+      </div>
+      <!-- /.reqeust -->
+
+
+      <!-- response -->
+      <div class="modal-body" ng-show="panel=='response'">
+        <dl class="dl-horizontal">
+          <dt title="状态代码">Status Code</dt>
+          <dd><span class="label {{ status_label(entry.response.status) }}">{{ entry.response.status }}</span></dd>
+        </dl>
+        <details open onclick="return false">
+          <summary title="请求头">Response Headers</summary>
+          <dl class="dl-horizontal">
+            <dt ng-repeat-start="header in entry.response.headers">{{ header.name }}</dt>
+            <dd ng-repeat-end>{{ header.value }}</dd>
+          </dl>
+        </details>
+        <details open onclick="return false">
+          <summary title="Cookies">Cookies</summary>
+          <dl class="dl-horizontal">
+            <dt ng-repeat-start="cookie in entry.response.cookies">{{ cookie.name }}</dt>
+            <dd ng-repeat-end>{{ cookie.value }}</dd>
+          </dl>
+        </details>
+      </div>
+      <!-- /.response -->
+
+
+      <!-- test -->
+      <div class="modal-body panel-test" ng-show="panel=='test'">
+        <div class="alert alert-danger" role="alert">
+          <strong>Oh snap!</strong> Change a few things up and try submitting again.
+        </div>
+        <details open onclick="return false">
+          <summary title="变量">
+            Variables
+            <a class="btn btn-info btn-xxs" ng-click="env.push({name:'', value:''})">ADD</a>
+          </summary>
+          <div editablelist="env"></div>
+        </details>
+        <details open onclick="return false">
+          <summary title="Cookies">
+            Cookies
+            <a class="btn btn-info btn-xxs" ng-click="session = []">CLEAR</a>
+          </summary>
+          <dl class="dl-horizontal">
+            <dt ng-repeat-start="cookie in session">{{ cookie.name }}</dt>
+            <dd ng-repeat-end>{{ cookie.value }}</dd>
+          </dl>
+        </details>
+      </div>
+      <!-- /.test -->
+
+
+      <!-- preview-headers -->
+      <div class="modal-body" ng-if="preview" ng-show="panel=='preview-headers'">
+        <dl class="dl-horizontal">
+          <dt title="请求 URL">Request URL</dt>
+          <dd>{{ preview.request.url }}</dd>
+          <dt title="请求方式">Request Method</dt>
+          <dd>{{ preview.request.method }}</dd>
+          <dt title="状态代码">Status Code</dt>
+          <dd><span class="label {{ status_label(preview.response.status) }}">{{ preview.response.status }}</span></dd>
+        </dl>
+
+        <!-- request header -->
+        <details open>
+          <summary title="请求头">Request Headers</summary>
+          <dl class="dl-horizontal">
+            <dt ng-repeat-start="header in preview.request.headers">{{ header.name }}</dt>
+            <dd ng-repeat-end>{{ header.value }}</dd>
+          </dl>
+        </details>
+        <!-- request payload -->
+        <details open ng-if="preview.request.postData.text">
+          <summary title="请求消息体">Request Payload</summary>
+          <pre ng-bind-html="variables_wrapper(preview.request.postData.text)" ng-if="preview.request.postData.text"></pre>
+          <dl class="dl-horizontal" ng-if="preview.request.postData.params">
+            <dt ng-repeat-start="each in preview.request.postData.params">{{ each.name }}</dt>
+            <dd ng-repeat-end>{{ each.value }}</dd>
+          </dl>
+        </details>
+        <!-- request query string -->
+        <details open ng-if="!preview.reqeust.postData.text && preview.request.queryString.length > 0">
+          <summary title="查询字符串参数">Query String Parameters</summary>
+          <dl class="dl-horizontal">
+            <dt ng-repeat-start="each in preview.request.queryString">{{ each.name }}</dt>
+            <dd ng-repeat-end>{{ each.value }}</dd>
+          </dl>
+        </details>
+
+        <!-- response headers -->
+        <details open>
+          <summary title="请求头">Response Headers</summary>
+          <dl class="dl-horizontal">
+            <dt ng-repeat-start="each in preview.response.headers">{{ each.name }}</dt>
+            <dd ng-repeat-end>{{ each.value }}</dd>
+          </dl>
+        </div>
+        <!-- /.preview-headers -->
+
+
+        <!-- preview -->
+        <div class="modal-body panel-preview" ng-show="panel=='preview'">
+          <div>
+            <span title="状态代码">Status Code:</span>
+            <span class="label {{ status_label(preview.response.status) }}">{{ preview.response.status }}</span>
+            <span ng-switch="preview.success">
+              <span class="glyphicon glyphicon-ok text-success" ng-switch-when="true"></span>
+              <span class="glyphicon glyphicon-remove text-danger" ng-switch-when="false"></span>
+            </span>
+          </div>
+
+          <details class="preview-assert" open onclick="return false">
+            <summary>
+              请求成功条件断言
+              <small>支持正则，任意条件满足即为请求成功（没有失败条件命中时）</small>
+              <a class="btn btn-info btn-xxs"
+                ng-click="entry.success_asserts.push({re:'', from:'content'})">ADD</a>
+            </summary>
+            <dl class="dl-horizontal">
+              <dt ng-repeat-start="rule in entry.success_asserts">
+                <select ng-model="rule.from" ng-options="v for v in ['content', 'status', 'header-location', 'header']"></select>
+                <div class="input-wrapper">
+                  <input placeholder="rule" ng-model="rule.re">
+                </div>
+                <span class="eq">=</span>
+              </dt>
+              <dd ng-repeat-end>
+              <span class="btn btn-default btn-xxs remove pull-right"
+                ng-click="delete(rule.$$hashKey, entry.success_asserts)"></span>
+              <span>{{ preview_match(rule.re, rule.from) }}</span>
+              <span ng-switch="preview_match(rule.re, rule.from)">
+                <span class="glyphicon glyphicon-remove text-danger" ng-switch-when="null"></span>
+                <span class="glyphicon glyphicon-ok text-success" ng-switch-default></span>
+              </span>
+              </dd>
+            </dl>
+          </details>
+
+          <details class="preview-assert" open onclick="return false">
+            <summary>
+              请求失败条件断言
+              <small>支持正则，任意条件满足即为请求失败</small>
+              <a class="btn btn-info btn-xxs"
+                ng-click="entry.failed_asserts.push({re:'', from:'content'})">ADD</a>
+            </summary>
+            <dl class="dl-horizontal">
+              <dt ng-repeat-start="rule in entry.failed_asserts">
+                <select ng-model="rule.from" ng-options="v for v in ['content', 'status', 'header-location', 'header']"></select>
+                <div class="input-wrapper">
+                  <input placeholder="rule" ng-model="rule.re">
+                </div>
+                <span class="eq">=</span>
+              </dt>
+              <dd ng-repeat-end>
+              <span class="btn btn-default btn-xxs remove pull-right"
+                ng-click="delete(rule.$$hashKey, entry.failed_asserts)"></span>
+              <span>{{ preview_match(rule.re, rule.from) }}</span>
+              <span ng-switch="preview_match(rule.re, rule.from)">
+                <span class="glyphicon glyphicon-remove text-danger" ng-switch-default></span>
+                <span class="glyphicon glyphicon-minus text-info" ng-switch-when="null"></span>
+              </span>
+              </dd>
+            </dl>
+          </details>
+
+          <details class="extract-variables" open onclick="return false">
+            <summary>
+              变量提取
+              <small>支持正则，支持括号表达式</small>
+              <a class="btn btn-info btn-xxs"
+                ng-click="entry.extract_variables.push({name: '', re:'', from:'content'})">ADD</a>
+            </summary>
+            <dl class="dl-horizontal">
+              <dt ng-repeat-start="rule in entry.extract_variables">
+                <div class=select-wrapper>
+                  <select ng-model="rule.from" ng-options="v for v in ['content', 'status', 'header-location', 'header']"></select>
+                </div>
+                <div class="input-wrapper name">
+                  <input type="text" placeholder="name" ng-model="rule.name" oninput="text_is_in_jinja_globals(this)">
+                </div>
+                <script>
+                  var jinja_globals = window.jinja_globals
+                  text_is_in_jinja_globals = function(text){
+                    if (jQuery.inArray(text.value, jinja_globals) >= 0){
+                      text.value = ['_',text.value].join("");
+                    }
+                  }
+                </script>
+                <span class="eq">=</span>
+                <div class="input-wrapper">
+                  <input placeholder="rule" ng-model="rule.re">
+                </div>
+                <span class="eq">=</span>
+              </dt>
+              <dd ng-repeat-end>
+              <span class="btn btn-default btn-xxs remove pull-right"
+                ng-click="delete(rule.$$hashKey, entry.extract_variables)"></span>
+              <span>{{ preview_match(rule.re, rule.from) }}</span>
+              </dd>
+            </dl>
+          </details>
+
+          <iframe sandbox></iframe>
+        </div>
+        <!-- /.preview -->
+
+
+        <!-- footer -->
+        <div class="modal-footer">
+          <div class="add-request">
+            在
+            <div class="btn-group">
+              <button type=button class="btn btn-default btn-xs" ng-click="add_request(0)">前面</button>
+              <button type=button class="btn btn-default btn-xs" ng-click="add_request(1)">后面</button>
+            </div>
+            插入一个请求，
+            <div class="btn-group">
+              <button type=button class="btn btn-default btn-xs" ng-click="copy_request()">复制</button>
+              <div class="btn-group">
+                <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                  粘贴
+                  <span class="caret"></span>
+                </button>
+                <ul class="dropdown-menu">
+                  <li ng-if="copy_entry" ng-click="paste_request(0)"><a href="javascript:void(0)">粘帖到前面</a></li>
+                  <li ng-if="copy_entry" ng-click="paste_request(1)"><a href="javascript:void(0)">粘帖到后面</a></li>
+                </ul>
+              </div>
+              <button type=button class="btn btn-default btn-xs" ng-click="del_request(0)">删除</button>
+            </div>
+            <div class="btn-group">
+              <button type="button" class="btn btn-default btn-xs dropdown-toggle" data-toggle="dropdown">
+                插入API
+                <span class="caret"></span>
+              </button>
+              <ul class="dropdown-menu">
+                <li class="dropdown-header">控制语句</li>
+                <li class="dropdown-submenu">
+                  <a href="#">插入循环</a>
+                  <ul class="dropdown-menu">
+                    <li ng-click="add_for_start()"><a href="javascript:void(0)">循环开始</a></li>
+                    <li ng-click="add_for_end()"><a href="javascript:void(0)">循环结束</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown-submenu">
+                  <a href="#">插入判断</a>
+                  <ul class="dropdown-menu">
+                    <li ng-click="add_if_start()"><a href="javascript:void(0)">判断开始</a></li>
+                    <li ng-click="add_if_else()"><a href="javascript:void(0)">判断不成立</a></li>
+                    <li ng-click="add_if_end()"><a href="javascript:void(0)">判断结束</a></li>
+                  </ul>
+                </li>
+                <li class="divider"></li>
+                <li class="dropdown-header">API请求</li>
+                <li class="dropdown-submenu">
+                  <a href="#">时间处理</a>
+                  <ul class="dropdown-menu">
+                    <li ng-click="add_delay_request()"><a href="javascript:void(0)">插入延时</a></li>
+                    <li ng-click="add_timestamp_request()"><a href="javascript:void(0)">插入时间戳</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown-submenu">
+                  <a href="#">编码解码</a>
+                  <ul class="dropdown-menu">
+                    <li ng-click="add_unicode_request()"><a href="javascript:void(0)">插入Unicode转换</a></li>
+                    <li ng-click="add_urldecode_request()"><a href="javascript:void(0)">插入URL解码</a></li>
+                    <li ng-click="add_gb2312_request()"><a href="javascript:void(0)">插入GB2312编码</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown-submenu">
+                  <a href="#">字符串处理</a>
+                  <ul class="dropdown-menu">
+                    <li ng-click="add_regex_request()"><a href="javascript:void(0)">插入正则表达式</a></li>
+                    <li ng-click="add_string_replace_request()"><a href="javascript:void(0)">插入字符串替换</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown-submenu">
+                  <a href="#">OCR工具</a>
+                  <ul class="dropdown-menu">
+                    <li ng-click="add_dddd_OCR_request()"><a href="javascript:void(0)">插入OCR识别</a></li>
+                    <li ng-click="add_dddd_DET_request()"><a href="javascript:void(0)">插入目标检测</a></li>
+                    <li ng-click="add_dddd_SLIDE_request()"><a href="javascript:void(0)">插入滑块识别</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown-submenu">
+                  <a href="#">加密解密</a>
+                  <ul class="dropdown-menu">
+                    <li ng-click="add_RSA_Encrypt_request()"><a href="javascript:void(0)">插入RSA加密</a></li>
+                    <li ng-click="add_RSA_Decrypt_request()"><a href="javascript:void(0)">插入RSA解密</a></li>
+                  </ul>
+                </li>
+                <li class="dropdown-submenu">
+                  <a href="#">记事本工具</a>
+                  <ul class="dropdown-menu">
+                    <li ng-click="add_read_notepad_request()"><a href="javascript:void(0)">读取记事本</a></li>
+                    <li ng-click="add_append_notepad_request()"><a href="javascript:void(0)">追加记事本</a></li>
+                  </ul>
+                </li>
+              </ul>
+            </div>
+          </div>
+          <button type="button" class="btn btn-success do-test" data-loading-test="Loading..."
+            ng-show="panel=='test' || panel=='preview' || panel=='preview-headers'"
+            ng-click="do_test()">测试</button>
+          <button type="button" class="btn btn-primary" data-loading-text="Saving..." data-dismiss="modal">Save</button>
+        </div>
+        <!-- /.footer -->
+      </div><!-- /.modal-content -->
+    </div><!-- /.modal-dialog -->
+  </div><!-- /.modal -->
+</div>
+
+<style type="text/css">
+  .dropdown-submenu {
+    position: relative;
+  }
+
+  .dropdown-submenu>.dropdown-menu {
+    top: 0;
+    left: 100%;
+    margin-top: -6px;
+    margin-left: -1px;
+    -webkit-border-radius: 0 6px 6px 6px;
+    -moz-border-radius: 0 6px 6px;
+    border-radius: 0 6px 6px 6px;
+  }
+
+  .dropdown-submenu:hover>.dropdown-menu {
+    display: block;
+  }
+
+  .dropdown-submenu>a:after {
+    display: block;
+    content: " ";
+    float: right;
+    width: 0;
+    height: 0;
+    border-color: transparent;
+    border-style: solid;
+    border-width: 5px 0 5px 5px;
+    border-left-color: #ccc;
+    margin-top: 5px;
+    margin-right: -10px;
+  }
+
+  .dropdown-submenu:hover>a:after {
+    border-left-color: #fff;
+  }
+
+  .dropdown-submenu.pull-left {
+    float: none;
+  }
+
+  .dropdown-submenu.pull-left>.dropdown-menu {
+    left: -100%;
+    margin-left: 10px;
+    -webkit-border-radius: 6px 0 6px 6px;
+    -moz-border-radius: 6px 0 6px 6px;
+    border-radius: 6px 0 6px 6px;
+  }
+</style>
+{% endraw %}

@@ -1,0 +1,52 @@
+{% import "utils.html" as utils %}
+<form method="POST" action="/task/{{ '%s/settime' % task.id if task else 'new' }}">
+  <h2 class="text-center">设置定时</h2>
+  <hr>
+
+  <div id="run-result"></div>
+  <div class="checkbox">
+    <label>
+      <input type="checkbox" id="ontime_flg" name="ontime_flg" {% if ontime.sw %}  checked=true {% endif %}> 定时开关
+    </label>
+  </div>
+  <select id="ontime_method">
+    <option {% if ontime.mode == 'ontime' %} selected="selected" {% endif %} value="ontime">定时</option>
+    <option {% if ontime.mode == 'cron' %} selected="selected" {% endif %} value="cron">cron</option>
+  </select>
+  <div id='ontime_content' {% if ontime.mode == 'ontime' %} style="display: block;" {% else %} style="display: none;" {% endif %}>
+    <div name="ontime readme">
+      <label class="control-label">定时任务起始日期, 定时执行周期为 24 小时：</label>
+    </div>
+    <input id="ontime_run_date" type="date" min="{{today_date}}" value="{{today_date}}">
+    <div name="ontime readme">
+      <label class="control-label">定时任务执行时间：</label>
+    </div>
+    <input type="time" id="ontime_val" value="{{ ontime.time }}" name='ontimevalue', step="1" />
+  </div>
+  <div id='cron_content' {% if ontime.mode == 'cron' %} style="display: block;" {% else %} style="display: none;" {% endif %}>
+    <input type="text" class="form-control" id="cron_val" name="cron_val" {% if ontime.mode == 'cron'%} value="{{ontime.cron_val}}" {% endif %} id="cron_val" placeholder="5/6位cron格式: 分 时 天 月 周 [秒]" >
+    <!-- <label class="control-label">精确到秒：</label>
+    <input type="number" id="cron_sec" name="cron_sec" value="{{ ontime.cron_sec }}" class="modal_input" min="0" max="59"/> -->
+  </div>
+  <div id="randtime_content">
+    <div name="randzone readme">
+      <label class="control-label">当天随机延时区间(0-604800)：</label>
+    </div>
+    <div name="randzone">
+      <label>
+        <input type="checkbox" id="randtimezonesw" name="randtimezonesw" {% if ontime.randsw %} checked="" {% endif %} >开关
+      </label>
+      <input type="number" id="randtimezone1" name="randtimezone1" value="{{ ontime.tz1 }}" class="modal_input" min="0" max="604800"/>~
+      <input type="number" id="randtimezone2" name="randtimezone2" value="{{ ontime.tz2 }}" class="modal_input" min="0" max="604800"/>秒
+    </div>
+  </div>
+
+  <div class="text-right">
+    <button id="send" name="send" type="submit" data-loading-text="loading..." class="btn btn-primary">提交</button>
+  </div>
+
+  <script src="{{ static_url('task.setTime.js') }}"></script>
+
+  {{ utils.task_new_scripts() }}
+  {{ utils.submit_loading() }}
+</form>

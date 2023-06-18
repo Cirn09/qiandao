@@ -1,0 +1,79 @@
+{% import "utils.html" as utils %}
+<form method="POST" action="/user/{{ userid }}/manage">
+  <h2 class="text-center">用户列表</h2>
+  <hr>
+
+  <div id="run-result">
+    {% if flg=='success' or flg=='danger' %}
+      {% include "utils_run_result.html" %}
+    {% endif %}
+  </div>
+
+  {% if adminflg %}
+  <div id="userlist">
+    <table id="user_table" class="table table-hover tablesorter">
+      <thead>
+        <tr>
+          <th></th>
+          <th>用户邮箱</th>
+          <th>状态</th>
+          <th>创建时间</th>
+          <th>最后登陆时间</th>
+          <th>功能</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for user in users | sort(reverse=True, attribute="ctime") %}
+        <tr>
+          <td>
+            <label>
+              <input type="checkbox"  name="{{user.id}}" class="userlist-chkbox">
+            </label>
+          </td>
+          <td>{{ user.email }}{% if user.role == 'admin' %}<br>[管理员]{% endif %}</td>
+          <td>
+              {{ user.status }}<br>
+              {% if user.email_verified %} 已验证邮箱
+              {% else %} 未验证邮箱
+              {% endif %}
+          </td>
+          <td>{{ format_date(user.ctime)}}</td>
+          <td>{{ format_date(user.atime)}}{% if user.aip %}<br>IP: {{ varbinary2ip(user.aip) }}{% endif %}</td>
+          <td>
+            <span type="span" class="btn btn-default">
+              <a data-load-method="GET" class="modal_load" href="/user/{{user.id}}/setnewpwd" title="修改密码">改密
+              </a>
+            </span>
+          </td>
+        </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  </div>
+
+  <div class="form-group">
+    <label class="control-label" for="note" ><font color='red'>必须输入账号密码验证！！！</font></label>
+    <div>
+    <label class="control-label" for="note">管理员邮箱</label>
+    </div>
+    <input type="text" class="form-control" name="adminmail" value="" id="adminmail" placeholder="必须输入账号密码验证">
+    <label class="control-label" for="note">管理员密码</label>
+    <input type='password' class="form-control" name="adminpwd" value="" id="adminpwd" placeholder="必须输入账号密码验证">
+  </div>
+
+  <div class="text-right">
+    <button id="ban" name="banbtn" type="submit" data-loading-text="loading..." class="btn btn-primary">禁用</button>
+    <button id="activate" name="activatebtn" type="submit" data-loading-text="loading..." class="btn btn-primary">启用</button>
+    <button id="verify" name="verifybtn" type="submit" data-loading-text="loading..." class="btn btn-primary">验证</button>
+    <button id="del" name="delbtn" type="submit" data-loading-text="loading..." class="btn btn-primary">删除</button>
+  </div>
+
+  {% else %}
+  <div style="text-align:center"> 非管理员,不可查看 </div>
+  {% endif %}
+
+  <script src="{{ static_url('user.manage.js') }}"></script>
+
+  {{ utils.submit_loading() }}
+</form>
+
